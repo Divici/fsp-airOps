@@ -1,24 +1,28 @@
 # Active Context: FSP Agentic Scheduler
 
 ## Current Phase
-Project bootstrap complete. Ready for first feature implementation.
+Implementation Phase 1: Foundation. Starting Task 1.1 (Project Scaffold).
+
+## Active Plan
+See `memory-bank/plans/mvp-implementation-plan.md` and `.claude/plans/functional-tinkering-fairy.md`.
 
 ## Just Completed
-- Bootstrapped agentic development workflow
-- Created .claude/ config, skills (orchestration, decision-log), hooks
-- Initialized memory bank and decision log
-- Made key stack decisions: pnpm + Next.js + Drizzle + PostgreSQL + OpenAI + Vitest
+- Finalized MVP implementation plan (48 tasks, 6 phases)
+- Locked technology decisions: Shadcn/ui, Inngest, date-fns-tz, FSP credential proxy, TanStack Query
+- Recorded decisions in `decisions/0002-technology-choices.md`
 
-## Next Steps
-1. Scaffold Next.js project with pnpm, configure ESLint/Prettier/Vitest/Drizzle
-2. Set up Docker Compose for PostgreSQL
-3. Define Drizzle schema for app-owned entities (from PRESEARCH section 16)
-4. Build typed FSP API client interfaces + mock implementations
-5. Implement first workflow: Reschedule on Cancellation (anchor workflow)
+## Next Steps (Phase 1: Foundation)
+1. **Task 1.1** — Project scaffold (Next.js + TS + ESLint + Vitest + Tailwind + Inngest + Shadcn/ui)
+2. **Task 1.9** — App shell and layout (parallel with backend tasks)
+3. **Task 1.2** — Docker Compose + PostgreSQL + Drizzle ORM
+4. **Task 1.3** — Core database schema (all app-owned entities)
+5. **Tasks 1.4–1.8** — Types, FSP mock client, tenant context, audit, config
+6. **Task 1.10** — Foundation integration test
 
 ## Active Decisions
-- See decisions/0001-project-bootstrap.md for initial setup choices
-- Background job execution model intentionally deferred
+- See decisions/0001-project-bootstrap.md for stack choices
+- See decisions/0002-technology-choices.md for technology selections
+- Background jobs: Inngest (decided, replaces deferred status)
 
 ## Blockers
 - No FSP dev credentials yet -- mock-first approach mitigates this
