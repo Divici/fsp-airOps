@@ -7,7 +7,8 @@ import type { IFspClient } from "@/lib/fsp-client";
 import type { OperatorSettings, SchedulingTrigger } from "@/lib/db/schema";
 import type { WorkflowContext, WorkflowResult } from "@/lib/types/workflow";
 import { getOperatorSettings } from "@/lib/db/queries/operator-settings";
-import { randomUUID } from "crypto";
+import { ProposalBuilder } from "./proposal-builder";
+import { triggerToWorkflow } from "./workflow-registry";
 
 /**
  * Step 2: Load operator settings (with defaults fallback).
@@ -36,21 +37,24 @@ export function buildWorkflowContext(
 }
 
 /**
- * Step 5: Build proposal from workflow result.
- *
- * Placeholder — will be fleshed out in Task 2.2.
- * For now, returns a mock proposal ID.
+ * Step 5: Build proposal from workflow result and persist it.
  */
 export async function buildProposal(
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _db: PostgresJsDatabase,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _operatorId: number,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _trigger: SchedulingTrigger,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _workflowResult: WorkflowResult
+  db: PostgresJsDatabase,
+  operatorId: number,
+  trigger: SchedulingTrigger,
+  workflowResult: WorkflowResult
 ): Promise<string> {
-  // TODO: Persist proposal + actions to DB in Task 2.2
-  return randomUUID();
+  const workflowType = triggerToWorkflow(trigger.type);
+  if (!workflowType) {
+    throw new Error(`No workflow mapping for trigger type: ${trigger.type}`);
+  }
+
+  const builder = new ProposalBuilder(db);
+  return builder.buildAndPersist({
+    operatorId,
+    workflowType,
+    triggerId: trigger.id,
+    result: workflowResult,
+  });
 }
