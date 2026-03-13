@@ -8,6 +8,7 @@ import { Orchestrator } from "./orchestrator";
 import { WorkflowRegistry } from "./workflow-registry";
 import { AuditService } from "./audit";
 import { RescheduleWorkflowHandler } from "./workflows/reschedule";
+import { NextLessonWorkflowHandler } from "./workflows/next-lesson";
 
 export function createOrchestrator(
   db: PostgresJsDatabase,
@@ -15,6 +16,7 @@ export function createOrchestrator(
 ): Orchestrator {
   const registry = new WorkflowRegistry();
   registry.register(new RescheduleWorkflowHandler(fspClient));
+  registry.register(new NextLessonWorkflowHandler(fspClient));
   const auditService = new AuditService(db);
   return new Orchestrator(db, fspClient, registry, auditService);
 }

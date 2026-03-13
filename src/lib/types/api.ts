@@ -118,3 +118,17 @@ export const triggerCancellationSchema = z.object({
 export type TriggerCancellationRequest = z.infer<
   typeof triggerCancellationSchema
 >;
+
+// ---- Lesson completion trigger --------------------------------------------
+
+export const triggerLessonCompletionSchema = z.object({
+  operatorId: z.number().int().positive(),
+  studentId: z.string().min(1),
+  enrollmentId: z.string().min(1),
+  completedEventId: z.string().min(1),
+  completedInstructorId: z.string().optional(),
+});
+
+export type TriggerLessonCompletionRequest = z.infer<
+  typeof triggerLessonCompletionSchema
+>;
