@@ -8,6 +8,7 @@ export default defineConfig({
     environment: "node",
     passWithNoTests: true,
     setupFiles: [],
+    exclude: ["**/node_modules/**", "**/.claude/worktrees/**"],
   },
   resolve: {
     alias: {
