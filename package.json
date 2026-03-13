@@ -1,0 +1,60 @@
+{
+  "name": "fsp-airops",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint . --max-warnings 0",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.90.21",
+    "date-fns": "^4.1.0",
+    "date-fns-tz": "^3.2.0",
+    "drizzle-orm": "^0.45.1",
+    "inngest": "^3.52.6",
+    "next": "^15.5.12",
+    "openai": "^6.29.0",
+    "postgres": "^3.4.8",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "typescript": "^5.9.3",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.3.5",
+    "@tailwindcss/postcss": "^4.2.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@types/node": "^25.5.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^4.4.1",
+    "autoprefixer": "^10.4.27",
+    "drizzle-kit": "^0.31.9",
+    "eslint": "^9.39.4",
+    "eslint-config-next": "^15.5.12",
+    "jsdom": "^28.1.0",
+    "postcss": "^8.5.8",
+    "tailwindcss": "^4.2.1",
+    "tsx": "^4.21.0",
+    "vitest": "^3.1.4"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "sharp",
+      "unrs-resolver"
+    ],
+    "overrides": {
+      "vite": "^6.4.1"
+    }
+  }
+}
