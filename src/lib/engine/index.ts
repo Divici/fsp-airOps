@@ -7,14 +7,15 @@ import type { IFspClient } from "@/lib/fsp-client";
 import { Orchestrator } from "./orchestrator";
 import { WorkflowRegistry } from "./workflow-registry";
 import { AuditService } from "./audit";
+import { RescheduleWorkflowHandler } from "./workflows/reschedule";
 
 export function createOrchestrator(
   db: PostgresJsDatabase,
   fspClient: IFspClient
 ): Orchestrator {
   const registry = new WorkflowRegistry();
+  registry.register(new RescheduleWorkflowHandler(fspClient));
   const auditService = new AuditService(db);
-  // Workflow handlers will be registered here as they're built
   return new Orchestrator(db, fspClient, registry, auditService);
 }
 
