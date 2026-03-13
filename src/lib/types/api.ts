@@ -132,3 +132,34 @@ export const triggerLessonCompletionSchema = z.object({
 export type TriggerLessonCompletionRequest = z.infer<
   typeof triggerLessonCompletionSchema
 >;
+
+// ---- Prospect list query --------------------------------------------------
+
+export const listProspectsQuerySchema = z.object({
+  status: z
+    .enum(["new", "processing", "proposed", "approved", "booked", "cancelled"])
+    .optional(),
+  startDate: z.string().date().optional(),
+  endDate: z.string().date().optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+});
+
+export type ListProspectsQuery = z.infer<typeof listProspectsQuerySchema>;
+
+// ---- Prospect status update -----------------------------------------------
+
+export const updateProspectStatusSchema = z.object({
+  status: z.enum([
+    "new",
+    "processing",
+    "proposed",
+    "approved",
+    "booked",
+    "cancelled",
+  ]),
+});
+
+export type UpdateProspectStatusRequest = z.infer<
+  typeof updateProspectStatusSchema
+>;
