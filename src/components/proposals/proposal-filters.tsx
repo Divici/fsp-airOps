@@ -16,10 +16,10 @@ import type { DateRange } from "@/lib/types/proposal-filters";
 const statusOptions: { value: ProposalStatus | "all"; label: string }[] = [
   { value: "all", label: "All statuses" },
   { value: "pending", label: "Pending" },
-  { value: "approved", label: "Approved" },
+  { value: "executed", label: "Approved" },
   { value: "declined", label: "Declined" },
   { value: "expired", label: "Expired" },
-  { value: "executed", label: "Executed" },
+  { value: "failed", label: "Failed" },
 ];
 
 const workflowOptions: { value: WorkflowType | "all"; label: string }[] = [
