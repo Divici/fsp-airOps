@@ -5,27 +5,52 @@ import { formatDistanceToNow, format } from "date-fns";
 import { AlertTriangle, Clock, MapPin, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { StatusBadge } from "./status-badge";
 import { WorkflowBadge } from "./workflow-badge";
 import type { ProposalView } from "@/lib/types/proposal-view";
 
-export function ProposalCard({ proposal }: { proposal: ProposalView }) {
+interface ProposalCardProps {
+  proposal: ProposalView;
+  selectionMode?: boolean;
+  selected?: boolean;
+  onToggleSelect?: (id: string) => void;
+}
+
+export function ProposalCard({
+  proposal,
+  selectionMode,
+  selected,
+  onToggleSelect,
+}: ProposalCardProps) {
   const isHighPriority = proposal.priority >= 7;
   const createdAgo = formatDistanceToNow(new Date(proposal.createdAt), {
     addSuffix: true,
   });
   const proposedTime = format(new Date(proposal.proposedStartTime), "EEE, MMM d 'at' h:mm a");
 
-  return (
-    <Link href={`/proposals/${proposal.id}`} className="group block">
-      <Card
-        size="sm"
-        className={cn(
-          "transition-shadow hover:ring-2 hover:ring-primary/20 hover:shadow-md",
-          isHighPriority && proposal.status === "pending" && "ring-amber-300/50"
+  const cardContent = (
+    <Card
+      size="sm"
+      className={cn(
+        "transition-shadow hover:ring-2 hover:ring-primary/20 hover:shadow-md",
+        isHighPriority && proposal.status === "pending" && "ring-amber-300/50",
+        selected && "ring-2 ring-primary/40 bg-primary/5"
+      )}
+    >
+      <div className="flex gap-3 px-4 py-3">
+        {/* Batch selection checkbox */}
+        {selectionMode && (
+          <div className="flex items-start pt-0.5">
+            <Checkbox
+              checked={selected}
+              onCheckedChange={() => onToggleSelect?.(proposal.id)}
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
         )}
-      >
-        <div className="flex flex-col gap-2 px-4 py-3">
+
+        <div className="flex flex-1 flex-col gap-2">
           {/* Top row: badges + priority */}
           <div className="flex items-center gap-2">
             <WorkflowBadge workflowType={proposal.workflowType} />
@@ -67,7 +92,24 @@ export function ProposalCard({ proposal }: { proposal: ProposalView }) {
             </span>
           </div>
         </div>
-      </Card>
+      </div>
+    </Card>
+  );
+
+  if (selectionMode) {
+    return (
+      <div
+        className="group block cursor-pointer"
+        onClick={() => onToggleSelect?.(proposal.id)}
+      >
+        {cardContent}
+      </div>
+    );
+  }
+
+  return (
+    <Link href={`/proposals/${proposal.id}`} className="group block">
+      {cardContent}
     </Link>
   );
 }

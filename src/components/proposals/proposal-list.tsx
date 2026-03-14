@@ -10,6 +10,9 @@ interface ProposalListProps {
   isLoading: boolean;
   isError: boolean;
   hasActiveFilters: boolean;
+  selectionMode?: boolean;
+  selectedIds?: Set<string>;
+  onToggleSelect?: (id: string) => void;
 }
 
 export function ProposalList({
@@ -17,6 +20,9 @@ export function ProposalList({
   isLoading,
   isError,
   hasActiveFilters,
+  selectionMode,
+  selectedIds,
+  onToggleSelect,
 }: ProposalListProps) {
   if (isLoading) {
     return <ProposalListSkeleton />;
@@ -66,7 +72,13 @@ export function ProposalList({
       </p>
       <div className="flex flex-col gap-2">
         {proposals.map((proposal) => (
-          <ProposalCard key={proposal.id} proposal={proposal} />
+          <ProposalCard
+            key={proposal.id}
+            proposal={proposal}
+            selectionMode={selectionMode}
+            selected={selectedIds?.has(proposal.id)}
+            onToggleSelect={onToggleSelect}
+          />
         ))}
       </div>
     </div>
