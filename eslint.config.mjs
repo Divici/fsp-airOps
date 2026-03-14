@@ -18,6 +18,7 @@ const eslintConfig = [
       "memory-bank/**",
       "decisions/**",
       "next-env.d.ts",
+      ".claude/worktrees/**",
     ],
   },
 ];

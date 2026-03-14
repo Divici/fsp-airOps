@@ -11,6 +11,7 @@ import { WorkflowBadge } from "./workflow-badge";
 import { RationaleSection } from "./rationale-section";
 import { ActionCard } from "./action-card";
 import { ApprovalPanel } from "./approval-panel";
+import { TrainingContext } from "./training-context";
 import { useProposalDetail } from "@/lib/hooks/use-proposal-detail";
 
 // ---------------------------------------------------------------------------
@@ -187,6 +188,11 @@ export function ProposalDetail({ proposalId }: ProposalDetailProps) {
       {/* Trigger context */}
       {proposal.triggerContext && (
         <TriggerContext context={proposal.triggerContext} />
+      )}
+
+      {/* Training context for next_lesson proposals */}
+      {proposal.workflowType === "next_lesson" && proposal.trainingContext && (
+        <TrainingContext data={proposal.trainingContext} />
       )}
 
       {/* AI rationale */}

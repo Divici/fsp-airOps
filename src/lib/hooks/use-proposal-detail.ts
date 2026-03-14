@@ -151,6 +151,15 @@ const mockDetails: Record<string, ProposalDetailView> = {
       previousLessonId: "les-1014",
       completedAt: hoursAgo(24),
     },
+    trainingContext: {
+      enrollmentName: "Private Pilot Certificate",
+      currentStage: "Pre-Solo",
+      completedLessons: 14,
+      totalLessons: 20,
+      nextLessonName: "Stage Check Prep",
+      instructorName: "Sarah Kim",
+      previousInstructorName: "Sarah Kim",
+    },
     actions: [
       {
         id: "a-003-1",
@@ -190,6 +199,15 @@ const mockDetails: Record<string, ProposalDetailView> = {
       type: "lesson_complete",
       previousLessonId: "les-987",
       completedAt: hoursAgo(48),
+    },
+    trainingContext: {
+      enrollmentName: "Private Pilot Certificate",
+      currentStage: "Solo Practice",
+      completedLessons: 8,
+      totalLessons: 20,
+      nextLessonName: "Pattern Work",
+      instructorName: "Sarah Kim",
+      previousInstructorName: "Dave Peterson",
     },
     actions: [
       {

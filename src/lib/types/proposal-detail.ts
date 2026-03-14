@@ -22,10 +22,24 @@ export interface ProposalActionView {
 }
 
 /**
+ * Training progression metadata populated by the next_lesson workflow.
+ */
+export interface TrainingContextData {
+  enrollmentName?: string;
+  currentStage?: string;
+  completedLessons?: number;
+  totalLessons?: number;
+  nextLessonName?: string;
+  instructorName?: string;
+  previousInstructorName?: string;
+}
+
+/**
  * Extended proposal view with full detail data including
  * actions list and trigger context for the detail page.
  */
 export interface ProposalDetailView extends ProposalView {
   actions: ProposalActionView[];
   triggerContext?: Record<string, unknown>;
+  trainingContext?: TrainingContextData;
 }
