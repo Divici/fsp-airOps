@@ -18,6 +18,7 @@ import {
   listProspectsQuerySchema,
 } from "@/lib/types/api";
 import { createTrigger } from "@/lib/db/queries/triggers";
+import { mapProspects } from "@/lib/api/mappers/prospect-mapper";
 
 export async function GET(request: Request) {
   try {
@@ -47,7 +48,7 @@ export async function GET(request: Request) {
     });
 
     return NextResponse.json({
-      prospects: result.prospects,
+      prospects: mapProspects(result.prospects),
       total: result.total,
       page,
       limit,

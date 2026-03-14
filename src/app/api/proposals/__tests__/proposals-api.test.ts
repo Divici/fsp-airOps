@@ -11,8 +11,20 @@ const mockCreateApprovalDecision = vi.fn();
 const mockLogProposalApproved = vi.fn();
 const mockLogProposalDeclined = vi.fn();
 
+// Chainable mock for db.select().from().where()
+const mockDbRows: unknown[] = [];
+const mockDbChain = {
+  from: vi.fn().mockReturnThis(),
+  where: vi.fn().mockImplementation(() => Promise.resolve(mockDbRows)),
+};
+const mockDbSelect = vi.fn().mockReturnValue(mockDbChain);
+
 vi.mock("@/lib/db", () => ({
-  db: {},
+  db: { select: (...args: unknown[]) => mockDbSelect(...args) },
+}));
+
+vi.mock("@/lib/db/schema", () => ({
+  proposalActions: { proposalId: "proposalId" },
 }));
 
 vi.mock("@/lib/db/queries/proposals", () => ({
@@ -45,6 +57,32 @@ vi.mock("@/lib/auth/session", () => ({
   getCurrentSession: vi.fn().mockResolvedValue(null),
 }));
 
+// Mock FSP client used by mappers
+const mockFspClient = {
+  getLocations: vi.fn().mockResolvedValue([
+    { id: "10", name: "KFPR Airport", code: "KFPR", timeZone: "America/New_York", isActive: true },
+  ]),
+  getUsers: vi.fn().mockResolvedValue([
+    { id: "student-1", firstName: "Jane", lastName: "Doe", fullName: "Jane Doe", email: "jane@test.com", role: "student", isActive: true, imageUrl: "" },
+    { id: "instructor-1", firstName: "John", lastName: "Smith", fullName: "John Smith", email: "john@test.com", role: "instructor", isActive: true, imageUrl: "" },
+  ]),
+  getAircraft: vi.fn().mockResolvedValue([
+    { id: "aircraft-1", registration: "N12345", make: "Cessna", model: "172", makeModel: "Cessna 172", isActive: true, isSimulator: false },
+  ]),
+  getActivityTypes: vi.fn().mockResolvedValue([
+    { id: "activity-1", name: "Dual Instruction", displayType: 1, isActive: true },
+  ]),
+};
+
+vi.mock("@/lib/fsp-client", () => ({
+  createFspClient: () => mockFspClient,
+}));
+
+// Mock drizzle-orm inArray (used in proposals list route)
+vi.mock("drizzle-orm", () => ({
+  inArray: vi.fn().mockReturnValue("mock-in-array-condition"),
+}));
+
 // Import route handlers after mocks
 import { GET as listHandler } from "../route";
 import { GET as detailHandler } from "../[id]/route";
@@ -72,6 +110,32 @@ function makeRequestWithTenant(
 
 const PROPOSAL_UUID = "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d";
 
+function makeAction(overrides?: Record<string, unknown>) {
+  return {
+    id: "action-1",
+    proposalId: PROPOSAL_UUID,
+    operatorId: 1,
+    rank: 1,
+    actionType: "create_reservation",
+    startTime: new Date("2026-01-15T10:00:00Z"),
+    endTime: new Date("2026-01-15T12:00:00Z"),
+    locationId: 10,
+    studentId: "student-1",
+    instructorId: "instructor-1",
+    aircraftId: "aircraft-1",
+    activityTypeId: "activity-1",
+    trainingContext: null,
+    explanation: "Test action",
+    validationStatus: "pending",
+    executionStatus: "pending",
+    executionError: null,
+    fspReservationId: null,
+    createdAt: new Date("2026-01-01"),
+    updatedAt: new Date("2026-01-01"),
+    ...overrides,
+  };
+}
+
 function makePendingProposal(overrides?: Record<string, unknown>) {
   return {
     id: PROPOSAL_UUID,
@@ -86,6 +150,8 @@ function makePendingProposal(overrides?: Record<string, unknown>) {
     affectedStudentIds: [],
     affectedReservationIds: [],
     affectedResourceIds: [],
+    validationSnapshot: null,
+    version: 1,
     createdAt: new Date("2026-01-01"),
     updatedAt: new Date("2026-01-01"),
     actions: [],
@@ -100,6 +166,8 @@ function makePendingProposal(overrides?: Record<string, unknown>) {
 describe("GET /api/proposals — List proposals", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Reset db mock to return empty actions by default
+    mockDbChain.where.mockImplementation(() => Promise.resolve([]));
   });
 
   it("returns proposals with pagination for the tenant", async () => {
@@ -165,7 +233,8 @@ describe("GET /api/proposals/:id — Get proposal detail", () => {
   });
 
   it("returns proposal with actions", async () => {
-    const proposal = makePendingProposal({ actions: [{ id: "action-1" }] });
+    const action = makeAction();
+    const proposal = makePendingProposal({ actions: [action] });
     mockGetProposalById.mockResolvedValue(proposal);
 
     const req = makeRequestWithTenant(
@@ -180,6 +249,8 @@ describe("GET /api/proposals/:id — Get proposal detail", () => {
     expect(res.status).toBe(200);
     expect(body.proposal.id).toBe(PROPOSAL_UUID);
     expect(body.proposal.actions).toHaveLength(1);
+    expect(body.proposal.actions[0].studentName).toBe("Jane Doe");
+    expect(body.proposal.actions[0].locationName).toBe("KFPR Airport");
   });
 
   it("returns 404 for missing proposal", async () => {

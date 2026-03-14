@@ -9,6 +9,8 @@ import {
   TenantResolutionError,
 } from "@/lib/auth/tenant-context";
 import { getProposalById } from "@/lib/db/queries/proposals";
+import { mapProposalDetail } from "@/lib/api/mappers/proposal-mapper";
+import { createFspClient } from "@/lib/fsp-client";
 
 export async function GET(
   request: Request,
@@ -27,7 +29,14 @@ export async function GET(
       );
     }
 
-    return NextResponse.json({ proposal });
+    const fspClient = createFspClient();
+    const proposalView = await mapProposalDetail(
+      proposal,
+      fspClient,
+      tenant.operatorId
+    );
+
+    return NextResponse.json({ proposal: proposalView });
   } catch (error) {
     if (error instanceof TenantResolutionError) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
