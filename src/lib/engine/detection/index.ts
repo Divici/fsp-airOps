@@ -9,3 +9,16 @@ export {
   type ScheduleSnapshot,
   type SnapshotDiff,
 } from "./schedule-snapshot";
+export {
+  LessonCompletionDetector,
+  createLessonSnapshot,
+  compareLessonSnapshots,
+  type DetectedLessonCompletion,
+  type LessonCompletionSnapshot,
+  type LessonCompletionDetectionResult,
+} from "./lesson-completion-detector";
+export {
+  OpeningDetector,
+  type DetectedOpening,
+  type OpeningDetectionResult,
+} from "./opening-detector";
