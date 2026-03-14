@@ -16,11 +16,20 @@ import { createApprovalDecision } from "@/lib/db/queries/approvals";
 import { assertTransition } from "@/lib/engine/proposal-lifecycle";
 import { AuditService } from "@/lib/engine/audit";
 import { batchApproveSchema } from "@/lib/types/api";
+import { createFspClient } from "@/lib/fsp-client";
+import { ReservationExecutor } from "@/lib/engine/execution/reservation-executor";
 
 interface BatchResult {
   proposalId: string;
   success: boolean;
   error?: string;
+  execution?: {
+    success: boolean;
+    actionsExecuted?: number;
+    actionsFailed?: number;
+    errors?: string[];
+    error?: string;
+  };
 }
 
 export async function POST(request: Request) {
@@ -47,6 +56,8 @@ export async function POST(request: Request) {
 
     const { proposalIds, notes } = parsed.data;
     const audit = new AuditService(db);
+    const fspClient = createFspClient();
+    const executor = new ReservationExecutor(db, fspClient, audit);
     const results: BatchResult[] = [];
 
     for (const proposalId of proposalIds) {
@@ -93,7 +104,35 @@ export async function POST(request: Request) {
           tenant.userId
         );
 
-        results.push({ proposalId, success: true });
+        // Execute the approved proposal (validate-then-create reservations)
+        try {
+          const executionResult = await executor.executeProposal(
+            tenant.operatorId,
+            proposalId
+          );
+          results.push({
+            proposalId,
+            success: true,
+            execution: {
+              success: executionResult.success,
+              actionsExecuted: executionResult.results.filter((r) => r.success).length,
+              actionsFailed: executionResult.results.filter((r) => !r.success).length,
+              errors: executionResult.errors,
+            },
+          });
+        } catch (executionError) {
+          // Execution failure should not fail the approval — proposal stays "approved"
+          const message =
+            executionError instanceof Error ? executionError.message : "Unknown execution error";
+          results.push({
+            proposalId,
+            success: true,
+            execution: {
+              success: false,
+              error: message,
+            },
+          });
+        }
       } catch (error) {
         const message =
           error instanceof Error ? error.message : "Unknown error";

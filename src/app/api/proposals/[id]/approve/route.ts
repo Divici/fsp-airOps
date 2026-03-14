@@ -16,6 +16,8 @@ import { createApprovalDecision } from "@/lib/db/queries/approvals";
 import { assertTransition } from "@/lib/engine/proposal-lifecycle";
 import { AuditService } from "@/lib/engine/audit";
 import { approveProposalSchema } from "@/lib/types/api";
+import { createFspClient } from "@/lib/fsp-client";
+import { ReservationExecutor } from "@/lib/engine/execution/reservation-executor";
 
 export async function POST(
   request: Request,
@@ -74,12 +76,39 @@ export async function POST(
     const audit = new AuditService(db);
     await audit.logProposalApproved(tenant.operatorId, id, tenant.userId);
 
-    return NextResponse.json({
-      success: true,
-      approvalId,
-      proposalId: id,
-      status: "approved",
-    });
+    // Execute the approved proposal (validate-then-create reservations)
+    try {
+      const fspClient = createFspClient();
+      const executor = new ReservationExecutor(db, fspClient, audit);
+      const executionResult = await executor.executeProposal(tenant.operatorId, id);
+
+      return NextResponse.json({
+        success: true,
+        approvalId,
+        proposalId: id,
+        status: executionResult.success ? "executed" : "failed",
+        execution: {
+          success: executionResult.success,
+          actionsExecuted: executionResult.results.filter((r) => r.success).length,
+          actionsFailed: executionResult.results.filter((r) => !r.success).length,
+          errors: executionResult.errors,
+        },
+      });
+    } catch (executionError) {
+      // Execution failure should not cause a 500 — proposal stays "approved"
+      const message =
+        executionError instanceof Error ? executionError.message : "Unknown execution error";
+      return NextResponse.json({
+        success: true,
+        approvalId,
+        proposalId: id,
+        status: "approved",
+        execution: {
+          success: false,
+          error: message,
+        },
+      });
+    }
   } catch (error) {
     if (error instanceof TenantResolutionError) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

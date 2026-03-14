@@ -1,10 +1,8 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { DEFAULT_OPERATOR_SETTINGS } from "@/config/defaults";
-import type { UpdateOperatorSettingsRequest } from "@/lib/types/api";
+"use client";
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import type { UpdateOperatorSettingsRequest } from "@/lib/types/api";
+import { apiFetch } from "@/lib/api/client";
 
 export interface OperatorSettings {
   timeSinceLastFlightWeight: number;
@@ -29,44 +27,15 @@ export interface OperatorSettings {
   };
 }
 
-// ---------------------------------------------------------------------------
-// Mock data — replaced with real API call later
-// ---------------------------------------------------------------------------
-
-let mockSettings: OperatorSettings = { ...DEFAULT_OPERATOR_SETTINGS };
-
-async function fetchOperatorSettings(): Promise<OperatorSettings> {
-  await new Promise((r) => setTimeout(r, 300));
-  return { ...mockSettings };
-}
-
-async function updateOperatorSettings(
-  update: UpdateOperatorSettingsRequest
-): Promise<OperatorSettings> {
-  await new Promise((r) => setTimeout(r, 400));
-  mockSettings = {
-    ...mockSettings,
-    ...update,
-    enabledWorkflows: {
-      ...mockSettings.enabledWorkflows,
-      ...update.enabledWorkflows,
-    },
-    communicationPreferences: {
-      ...mockSettings.communicationPreferences,
-      ...update.communicationPreferences,
-    },
-  };
-  return { ...mockSettings };
-}
-
-// ---------------------------------------------------------------------------
-// Hooks
-// ---------------------------------------------------------------------------
-
 export function useOperatorSettings() {
   return useQuery({
     queryKey: ["operator-settings"],
-    queryFn: fetchOperatorSettings,
+    queryFn: async () => {
+      const data = await apiFetch<{ settings: OperatorSettings }>(
+        `/api/settings`,
+      );
+      return data.settings;
+    },
   });
 }
 
@@ -74,8 +43,12 @@ export function useUpdateOperatorSettings() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (update: UpdateOperatorSettingsRequest) =>
-      updateOperatorSettings(update),
+    mutationFn: async (update: UpdateOperatorSettingsRequest) => {
+      await apiFetch(`/api/settings`, {
+        method: "PATCH",
+        body: JSON.stringify(update),
+      });
+    },
     onSuccess: () => {
       void queryClient.invalidateQueries({
         queryKey: ["operator-settings"],
@@ -89,9 +62,9 @@ export function useResetOperatorSettings() {
 
   return useMutation({
     mutationFn: async () => {
-      await new Promise((r) => setTimeout(r, 400));
-      mockSettings = { ...DEFAULT_OPERATOR_SETTINGS };
-      return { ...mockSettings };
+      await apiFetch(`/api/settings/reset`, {
+        method: "POST",
+      });
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({

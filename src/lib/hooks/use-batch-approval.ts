@@ -1,19 +1,8 @@
+"use client";
+
 import { useState, useCallback } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-
-// ---------------------------------------------------------------------------
-// Mock batch operations — replaced with real API calls later
-// ---------------------------------------------------------------------------
-
-async function batchApproveProposals(ids: string[]): Promise<void> {
-  await new Promise((r) => setTimeout(r, 600));
-  void ids; // will send to API in real implementation
-}
-
-async function batchDeclineProposals(ids: string[]): Promise<void> {
-  await new Promise((r) => setTimeout(r, 600));
-  void ids; // will send to API in real implementation
-}
+import { apiFetch } from "@/lib/api/client";
 
 // ---------------------------------------------------------------------------
 // Selection state hook
@@ -44,7 +33,7 @@ export function useBatchSelection() {
 
   const isSelected = useCallback(
     (id: string) => selectedIds.has(id),
-    [selectedIds]
+    [selectedIds],
   );
 
   return {
@@ -65,7 +54,12 @@ export function useBatchApprove() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (ids: string[]) => batchApproveProposals(ids),
+    mutationFn: async (ids: string[]) => {
+      await apiFetch(`/api/proposals/batch/approve`, {
+        method: "POST",
+        body: JSON.stringify({ proposalIds: ids }),
+      });
+    },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["proposals"] });
     },
@@ -76,7 +70,18 @@ export function useBatchDecline() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (ids: string[]) => batchDeclineProposals(ids),
+    mutationFn: async ({
+      ids,
+      reason,
+    }: {
+      ids: string[];
+      reason?: string;
+    }) => {
+      await apiFetch(`/api/proposals/batch/decline`, {
+        method: "POST",
+        body: JSON.stringify({ proposalIds: ids, reason }),
+      });
+    },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["proposals"] });
     },
@@ -94,12 +99,13 @@ export function useBatchApproval() {
 
   const batchApprove = useCallback(
     (ids: string[]) => approveMutation.mutateAsync(ids),
-    [approveMutation]
+    [approveMutation],
   );
 
   const batchDecline = useCallback(
-    (ids: string[]) => declineMutation.mutateAsync(ids),
-    [declineMutation]
+    (ids: string[]) =>
+      declineMutation.mutateAsync({ ids }),
+    [declineMutation],
   );
 
   return {
