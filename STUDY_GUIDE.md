@@ -91,9 +91,55 @@ The key insight: this is NOT a chatbot or autonomous scheduler. It's an operatio
 - **Chosen:** Vitest with jsdom for component tests.
 - **Why:** Native ESM support, fast, works seamlessly with the Vite-based toolchain. Same API as Jest so the learning curve is zero.
 
+### Server-Side View Mappers (not client-side)
+
+- **Chosen:** API routes call mapper functions that resolve DB IDs to human-readable names via FSP client, then return "View" types to the browser.
+- **Alternatives:** Send raw IDs to the client and resolve names there, or denormalize names into the DB.
+- **Why:** The FSP client (which knows instructor names, aircraft registrations, location names) is a server-only dependency. The browser cannot call FSP directly. Denormalizing into the DB would create stale-name bugs when FSP data changes.
+- **Tradeoff:** Every proposal list request makes 4 parallel FSP calls (locations, users, aircraft, activity types) to build lookup maps. Could add caching later.
+- **Analogy:** Like a waiter who translates the kitchen's internal ticket codes into dish names before bringing the menu to the table.
+
+### Inline Execution on Approval (not queued)
+
+- **Chosen:** When a dispatcher clicks "Approve," the API route calls `ReservationExecutor.executeProposal()` synchronously in the same HTTP request.
+- **Alternatives:** Queue the execution as a background job (Inngest) and poll for completion.
+- **Why:** Keeps UX simple. The button shows a loading spinner, and when the request completes, the dispatcher sees "Approved" or "Failed" immediately. No polling, no "pending execution" intermediate state.
+- **Tradeoff:** If FSP is slow, the approve request takes longer. Acceptable for MVP; could move to async later.
+
+### "Approved" Label Replaces "Executed" in UI
+
+- **Chosen:** Dispatchers see "Approved" (green) after successful execution, not "Executed."
+- **Why:** Dispatchers think in terms of their decision ("I approved it"), not the system's internal mechanics ("a reservation was created in FSP"). "Failed" is still shown separately for visibility.
+- **Tradeoff:** Internal status still tracks `executed` vs `approved` in the DB for debugging.
+
+### Await Query Invalidation in Mutations
+
+- **Chosen:** React Query mutations `await queryClient.invalidateQueries()` before resolving, so the button loading state persists until fresh data arrives.
+- **Alternatives:** Fire-and-forget invalidation (stale UI flickers briefly).
+- **Why:** Prevents the 200ms window where the UI shows stale data (e.g., proposal still showing "Pending" after approval).
+
+### Discovery Prospect Lifecycle (automatic status progression)
+
+- **Chosen:** Prospect status advances automatically: `new` -> `processing` -> `proposed` (on trigger dispatch) -> `approved` -> `booked` (on proposal approval + execution success).
+- **Why:** The dispatcher should not have to manually update prospect status. The system knows when a proposal was generated and when it was approved.
+- **Tradeoff:** If execution fails, the prospect stays at "approved" (not "booked"), which requires manual follow-up.
+
 ---
 
 ## How Each Piece Works
+
+### End-to-End Data Flow
+
+The app is fully wired from UI to database and back. Here is the path a user action takes:
+
+1. **UI component** calls a React Query hook (e.g., `useProposals()`).
+2. The hook calls **`apiFetch<T>()`** (`src/lib/api/client.ts`), a typed fetch wrapper that hits a Next.js API route.
+3. The **API route** (`src/app/api/...`) extracts the tenant from the request, queries the DB via Drizzle, and calls a **view mapper** to resolve IDs to names.
+4. The mapper calls the **FSP client** to look up resource names (instructors, aircraft, locations).
+5. The API route returns a **View type** (e.g., `ProposalView`) as JSON.
+6. React Query caches the response and the UI renders.
+
+For mutations (approve, create prospect), the flow adds: API route validates input -> updates DB -> executes side effects (e.g., ReservationExecutor) -> returns result -> mutation hook awaits `invalidateQueries()` -> UI refreshes.
 
 ### Orchestrator (`src/lib/engine/orchestrator.ts`)
 
@@ -223,6 +269,26 @@ Three components, all with singleton instances exported from `index.ts`:
 - **Templates** (`templates.ts`): Mustache-style `{{variable}}` interpolation for 4 templates: `proposal_ready`, `proposal_approved`, `reservation_created`, `discovery_flight_confirmation`.
 - **Providers:** `email-provider.ts` and `sms-provider.ts` define the pluggable interfaces.
 
+### API Fetch Client (`src/lib/api/client.ts`)
+
+- **What:** A typed fetch wrapper for calling the app's own Next.js API routes from React Query hooks.
+- **How:** `apiFetch<T>(path, init)` calls `fetch()`, checks `res.ok`, and returns typed JSON. On error, throws `ApiError` with status code and message. In mock mode, the middleware auto-injects tenant headers so no auth setup is needed client-side.
+- **Example:** `apiFetch<ProposalView[]>('/api/proposals')` returns a typed array of proposal views.
+
+### View Mappers (`src/lib/api/mappers/`)
+
+- **What:** Server-side functions that transform DB rows (which store numeric/string IDs) into View types (which have human-readable names).
+- **How:** `mapProposals()` calls `buildLookups()` which makes 4 parallel FSP client calls to fetch all locations, users, aircraft, and activity types. It builds in-memory Maps for O(1) lookups. Then each DB row is mapped to a View object by replacing IDs with names.
+- **Key pattern:** The lookups are built once per request, not per row. So mapping 50 proposals still only makes 4 FSP calls.
+- **Example:** DB row has `{ studentId: "usr_123", locationId: 5 }` -> mapper resolves to `{ studentName: "John Smith", locationName: "KPAO - Palo Alto" }`.
+
+### Trigger Service (`src/lib/engine/trigger-service.ts`)
+
+- **What:** Creates, deduplicates, and dispatches scheduling triggers to the orchestrator.
+- **How:** `createAndDispatch(params)` first checks for duplicate triggers within a dedup window (prevents double-processing). If unique, it inserts a trigger record, then calls `orchestrator.execute()` to run the corresponding workflow. Updates the trigger status based on the result.
+- **Used by:** Discovery flight flow (prospect creation auto-dispatches a trigger), cancellation detection, lesson completion webhooks.
+- **Example:** New prospect created -> `triggerService.createAndDispatch({ type: "discovery_flight", sourceEntityId: prospectId })` -> orchestrator runs discovery-flight workflow -> proposal is generated -> prospect status advances to "proposed."
+
 ### Operator Settings (`src/config/defaults.ts`)
 
 - Configurable per operator. Defaults: 7-day search window, top 5 alternatives, prefer same instructor (weight 0.8), no same-aircraft preference (weight 0.3), daylight-only flights, all workflows enabled, email on / SMS off.
@@ -232,15 +298,20 @@ Three components, all with singleton instances exported from `index.ts`:
 
 ## Things That Don't Work Well
 
-- **No real FSP integration yet** -- everything runs against mocks, so real-world edge cases (rate limits, stale data, timezone bugs, auth token refresh) are unknown.
+- **FSP real client is completely stubbed** -- all 18 methods return mock data. Waiting on FSP dev credentials. Real-world edge cases (rate limits, stale data, auth token refresh, error formats) are completely unknown.
+- **Race condition between validate and create** -- FSP uses a two-step API: validate reservation, then create reservation. Another user could book the same slot between these two calls. Inherent to FSP's API design; no solution without FSP-side locking.
+- **Public FSP developer API is read-only** -- write operations (creating reservations) require an internal access tier that hasn't been confirmed. The entire execution pipeline may need rework if the write API differs from documentation.
+- **Communication providers are stubs** -- email and SMS providers log to console instead of sending. Need actual integrations (SendGrid, Twilio, etc.).
+- **Schedule snapshot persistence is in-memory** -- the cancellation detector compares snapshots, but previous snapshots are lost on server restart. Needs persistent storage (DB or Redis).
+- **Auth is mock-only** -- middleware auto-injects a tenant context. No real authentication flow exists yet.
+- **No seed script for demo data** -- running the app locally shows an empty state. Need a seed script to populate proposals, prospects, and triggers for demos.
 - **In-memory metrics** -- MetricsCollector stores everything in memory. Restarting the server loses all metrics. Need to export to a real backend (Prometheus, Datadog, etc.) for production.
 - **Waitlist ranking quality depends on signal quality** -- if FSP data about "time since last flight" is inaccurate or missing, ranking degrades. Will need iteration with real data.
 - **Timezone handling is tricky** -- FSP reservation create uses local time, AutoSchedule returns UTC, availability uses UTC with dayOfWeek. The `TimezoneResolver` defaults to UTC when no mapping is provided. Getting this wrong creates off-by-hours reservation bugs.
 - **No FSP webhooks confirmed** -- if FSP doesn't support real-time event streams, the cancellation detector relies on polling (snapshot comparison), which introduces latency.
 - **Single-threaded execution** -- ReservationExecutor processes actions sequentially within a proposal. For proposals with many actions, this could be slow.
 - **No rate limiting on FSP calls** -- the mock doesn't enforce rate limits, so we don't know how the system behaves under FSP's actual rate limits.
-- **Communication providers are interfaces only** -- no real email/SMS sending is implemented. The providers need actual integrations (SendGrid, Twilio, etc.).
-- **Proposal expiration is passive** -- proposals have an `expiresAt` field but no background job actively expires them. They get checked on access.
+- **View mapper makes 4 FSP calls per request** -- every proposal list request fetches all locations, users, aircraft, and activity types to build lookup maps. No caching layer yet. Could be slow with a real FSP API.
 
 ---
 
