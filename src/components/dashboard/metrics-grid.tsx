@@ -69,9 +69,9 @@ function getMetricCards(data: DashboardMetrics): MetricCardProps[] {
     {
       icon: <CheckCircle className="size-5 text-green-600 dark:text-green-400" />,
       label: "Approved Today",
-      value: data.approvedToday,
+      value: data.executedToday,
       colorClass: "bg-green-100 dark:bg-green-900/30",
-      href: "/proposals?status=approved&date=today",
+      href: "/proposals?status=executed&date=today",
     },
     {
       icon: <XCircle className="size-5 text-red-600 dark:text-red-400" />,
@@ -82,10 +82,10 @@ function getMetricCards(data: DashboardMetrics): MetricCardProps[] {
     },
     {
       icon: <PlayCircle className="size-5 text-blue-600 dark:text-blue-400" />,
-      label: "Executed Today",
-      value: data.executedToday,
+      label: "Failed Today",
+      value: data.approvedToday,
       colorClass: "bg-blue-100 dark:bg-blue-900/30",
-      href: "/proposals?status=executed&date=today",
+      href: "/proposals?status=failed&date=today",
     },
     {
       icon: <Zap className="size-5 text-purple-600 dark:text-purple-400" />,
