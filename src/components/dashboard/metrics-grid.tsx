@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {
   Clock,
   CheckCircle,
@@ -18,11 +19,12 @@ interface MetricCardProps {
   label: string;
   value: number;
   colorClass: string;
+  href?: string;
 }
 
-function MetricCard({ icon, label, value, colorClass }: MetricCardProps) {
-  return (
-    <Card size="sm">
+function MetricCard({ icon, label, value, colorClass, href }: MetricCardProps) {
+  const content = (
+    <Card size="sm" className={href ? "transition-colors hover:border-foreground/20 hover:bg-accent/50" : ""}>
       <CardContent className="flex items-center gap-3">
         <div className={`flex size-10 items-center justify-center rounded-lg ${colorClass}`}>
           {icon}
@@ -34,6 +36,11 @@ function MetricCard({ icon, label, value, colorClass }: MetricCardProps) {
       </CardContent>
     </Card>
   );
+
+  if (href) {
+    return <Link href={href} className="block">{content}</Link>;
+  }
+  return content;
 }
 
 function MetricCardSkeleton() {
@@ -57,24 +64,28 @@ function getMetricCards(data: DashboardMetrics): MetricCardProps[] {
       label: "Pending Proposals",
       value: data.pendingProposals,
       colorClass: "bg-amber-100 dark:bg-amber-900/30",
+      href: "/proposals?status=pending",
     },
     {
       icon: <CheckCircle className="size-5 text-green-600 dark:text-green-400" />,
       label: "Approved Today",
       value: data.approvedToday,
       colorClass: "bg-green-100 dark:bg-green-900/30",
+      href: "/proposals?status=approved&date=today",
     },
     {
       icon: <XCircle className="size-5 text-red-600 dark:text-red-400" />,
       label: "Declined Today",
       value: data.declinedToday,
       colorClass: "bg-red-100 dark:bg-red-900/30",
+      href: "/proposals?status=declined&date=today",
     },
     {
       icon: <PlayCircle className="size-5 text-blue-600 dark:text-blue-400" />,
       label: "Executed Today",
       value: data.executedToday,
       colorClass: "bg-blue-100 dark:bg-blue-900/30",
+      href: "/proposals?status=executed&date=today",
     },
     {
       icon: <Zap className="size-5 text-purple-600 dark:text-purple-400" />,
@@ -87,6 +98,7 @@ function getMetricCards(data: DashboardMetrics): MetricCardProps[] {
       label: "Recent Activity",
       value: data.recentActivity,
       colorClass: "bg-slate-100 dark:bg-slate-800/50",
+      href: "/activity",
     },
   ];
 }
