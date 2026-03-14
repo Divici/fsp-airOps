@@ -6,15 +6,15 @@
 import { DiscoveryIntakeForm } from "@/components/discovery/intake-form";
 
 interface PageProps {
-  params: Promise<{ operatorSlug: string }>;
+  params: Promise<{ id: string }>;
 }
 
 export default async function DiscoveryFlightPage({ params }: PageProps) {
-  const { operatorSlug } = await params;
+  const { id } = await params;
 
-  // In a real implementation, resolve operatorSlug to operatorId via DB lookup.
+  // In a real implementation, resolve operator slug/id to operatorId via DB lookup.
   // For now, use a simple numeric fallback.
-  const operatorId = parseInt(operatorSlug, 10) || 1;
+  const operatorId = parseInt(id, 10) || 1;
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-sky-50 to-white flex items-center justify-center p-4">

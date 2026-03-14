@@ -179,3 +179,15 @@ export const batchDeclineSchema = z.object({
 });
 
 export type BatchDeclineRequest = z.infer<typeof batchDeclineSchema>;
+
+// ---- Audit event list query -----------------------------------------------
+
+export const auditListQuerySchema = z.object({
+  eventType: z.string().optional(),
+  startDate: z.string().date().optional(),
+  endDate: z.string().date().optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+});
+
+export type AuditListQuery = z.infer<typeof auditListQuerySchema>;
