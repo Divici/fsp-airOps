@@ -8,6 +8,8 @@ import {
   XCircle,
   AlertTriangle,
   Zap,
+  Brain,
+  Shield,
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -21,6 +23,9 @@ const EVENT_ICONS: Record<string, React.ReactNode> = {
   proposal_expired: <AlertTriangle className="size-4 text-amber-500" />,
   reservation_created: <Zap className="size-4 text-purple-500" />,
   trigger_received: <AlertTriangle className="size-4 text-orange-500" />,
+  proposal_auto_approved: <Zap className="size-4 text-purple-500" />,
+  proposal_auto_deferred: <Brain className="size-4 text-amber-500" />,
+  risk_assessed: <Shield className="size-4 text-blue-500" />,
 };
 
 function ActivityRow({ item }: { item: RecentActivityItem }) {

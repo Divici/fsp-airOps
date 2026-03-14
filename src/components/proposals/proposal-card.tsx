@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { StatusBadge } from "./status-badge";
 import { WorkflowBadge } from "./workflow-badge";
+import { AutoApprovedBadge } from "./auto-approved-badge";
 import type { ProposalView } from "@/lib/types/proposal-view";
 
 interface ProposalCardProps {
@@ -55,6 +56,7 @@ export function ProposalCard({
           <div className="flex items-center gap-2">
             <WorkflowBadge workflowType={proposal.workflowType} />
             <StatusBadge status={proposal.status} />
+            {proposal.autoApproved && <AutoApprovedBadge />}
             {isHighPriority && proposal.status === "pending" && (
               <span className="ml-auto inline-flex items-center gap-1 text-xs font-medium text-amber-600 dark:text-amber-400">
                 <AlertTriangle className="size-3" />

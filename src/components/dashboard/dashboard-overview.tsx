@@ -2,8 +2,13 @@
 
 import { MetricsGrid } from "./metrics-grid";
 import { RecentActivity } from "./recent-activity";
+import { useRecentActivity } from "@/lib/hooks/use-dashboard-metrics";
+import { useAutoApprovalToasts } from "@/lib/hooks/use-auto-approval-toasts";
 
 export function DashboardOverview() {
+  const { data: activityData } = useRecentActivity();
+  useAutoApprovalToasts(activityData);
+
   return (
     <div className="space-y-6">
       <div>

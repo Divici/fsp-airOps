@@ -12,6 +12,9 @@ import { RationaleSection } from "./rationale-section";
 import { ActionCard } from "./action-card";
 import { ApprovalPanel } from "./approval-panel";
 import { TrainingContext } from "./training-context";
+import { AutoApprovedBadge } from "./auto-approved-badge";
+import { RiskAssessmentSection } from "./risk-assessment-section";
+import type { RiskAssessmentData } from "./risk-assessment-section";
 import { useProposalDetail } from "@/lib/hooks/use-proposal-detail";
 
 // ---------------------------------------------------------------------------
@@ -147,6 +150,7 @@ export function ProposalDetail({ proposalId }: ProposalDetailProps) {
         <div className="flex flex-wrap items-center gap-2">
           <WorkflowBadge workflowType={proposal.workflowType} />
           <StatusBadge status={proposal.status} />
+          {proposal.autoApproved && <AutoApprovedBadge />}
           {isHighPriority && proposal.status === "pending" && (
             <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-600 dark:text-amber-400">
               <AlertTriangle className="size-3" />
@@ -186,9 +190,9 @@ export function ProposalDetail({ proposalId }: ProposalDetailProps) {
       <Separator />
 
       {/* Trigger context */}
-      {proposal.triggerContext && (
+      {proposal.triggerContext ? (
         <TriggerContext context={proposal.triggerContext} />
-      )}
+      ) : null}
 
       {/* Training context for next_lesson proposals */}
       {proposal.workflowType === "next_lesson" && proposal.trainingContext && (
@@ -200,6 +204,17 @@ export function ProposalDetail({ proposalId }: ProposalDetailProps) {
         summary={proposal.summary}
         rationale={proposal.rationale}
       />
+
+      {/* Risk assessment */}
+      {proposal.validationSnapshot != null &&
+        "decision" in (proposal.validationSnapshot as Record<string, unknown>) ? (
+          <>
+            <Separator />
+            <RiskAssessmentSection
+              data={proposal.validationSnapshot as unknown as RiskAssessmentData}
+            />
+          </>
+        ) : null}
 
       <Separator />
 

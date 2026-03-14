@@ -42,4 +42,5 @@ export interface ProposalDetailView extends ProposalView {
   actions: ProposalActionView[];
   triggerContext?: Record<string, unknown>;
   trainingContext?: TrainingContextData;
+  validationSnapshot?: Record<string, unknown> | null;
 }

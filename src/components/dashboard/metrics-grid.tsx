@@ -74,6 +74,13 @@ function getMetricCards(data: DashboardMetrics): MetricCardProps[] {
       href: "/proposals?status=executed&date=today",
     },
     {
+      icon: <Zap className="size-5 text-purple-600 dark:text-purple-400" />,
+      label: "Auto-Approved Today",
+      value: data.autoApprovedToday,
+      colorClass: "bg-purple-100 dark:bg-purple-900/30",
+      href: "/proposals?status=executed",
+    },
+    {
       icon: <XCircle className="size-5 text-red-600 dark:text-red-400" />,
       label: "Declined Today",
       value: data.declinedToday,
@@ -109,7 +116,7 @@ export function MetricsGrid() {
   if (isLoading || !data) {
     return (
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {Array.from({ length: 6 }).map((_, i) => (
+        {Array.from({ length: 7 }).map((_, i) => (
           <MetricCardSkeleton key={i} />
         ))}
       </div>

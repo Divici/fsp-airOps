@@ -155,5 +155,6 @@ export async function mapProposalDetail(
     actions: proposal.actions.map((a) => mapAction(a, lookups)),
     triggerContext: undefined,
     trainingContext: undefined,
+    validationSnapshot: (proposal.validationSnapshot as Record<string, unknown> | null) ?? null,
   };
 }
