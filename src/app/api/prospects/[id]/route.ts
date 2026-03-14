@@ -14,6 +14,7 @@ import {
   updateProspectStatus,
 } from "@/lib/db/queries/prospects";
 import { updateProspectStatusSchema } from "@/lib/types/api";
+import { toProspectView } from "@/lib/api/mappers/prospect-mapper";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -33,7 +34,7 @@ export async function GET(request: Request, { params }: RouteParams) {
       );
     }
 
-    return NextResponse.json({ prospect });
+    return NextResponse.json({ prospect: toProspectView(prospect) });
   } catch (error) {
     if (error instanceof TenantResolutionError) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
