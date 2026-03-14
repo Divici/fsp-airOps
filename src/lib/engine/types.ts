@@ -24,6 +24,7 @@ export interface EngineExecutionResult {
   proposalId?: string;
   success: boolean;
   error?: string;
+  autoApproved?: boolean;
   /** Audit event IDs generated during execution. */
   auditTrail: string[];
 }

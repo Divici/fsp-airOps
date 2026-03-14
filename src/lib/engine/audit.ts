@@ -123,6 +123,37 @@ export class AuditService {
   }
 
   // ---------------------------------------------------------------------------
+  // Convenience — Auto-approval events
+  // ---------------------------------------------------------------------------
+
+  async logProposalAutoApproved(
+    operatorId: number,
+    proposalId: string,
+    confidence: number,
+    threshold: number,
+  ): Promise<void> {
+    await this.logEvent(operatorId, AUDIT_EVENT_TYPES.PROPOSAL_AUTO_APPROVED, {
+      entityId: proposalId,
+      entityType: "proposal",
+      payload: { confidence, threshold },
+    });
+  }
+
+  async logProposalAutoDeferred(
+    operatorId: number,
+    proposalId: string,
+    confidence: number,
+    threshold: number,
+    reasoning: string,
+  ): Promise<void> {
+    await this.logEvent(operatorId, AUDIT_EVENT_TYPES.PROPOSAL_AUTO_DEFERRED, {
+      entityId: proposalId,
+      entityType: "proposal",
+      payload: { confidence, threshold, reasoning },
+    });
+  }
+
+  // ---------------------------------------------------------------------------
   // Query helpers
   // ---------------------------------------------------------------------------
 

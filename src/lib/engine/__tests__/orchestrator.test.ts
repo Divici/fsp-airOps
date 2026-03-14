@@ -52,6 +52,10 @@ const mockSettings: OperatorSettings = {
   updatedAt: new Date("2026-01-01"),
 };
 
+vi.mock("@/inngest/client", () => ({
+  inngest: { send: vi.fn().mockResolvedValue({ ids: [] }) },
+}));
+
 vi.mock("@/lib/db/queries/proposals", () => ({
   createProposal: vi.fn().mockResolvedValue({
     proposalId: "mock-proposal-id",

@@ -46,6 +46,10 @@ const mockUpdateActionExecutionStatus = vi.fn().mockResolvedValue(undefined);
 const mockListProposals = vi.fn();
 const mockExpireStaleProposals = vi.fn();
 
+vi.mock("@/inngest/client", () => ({
+  inngest: { send: vi.fn().mockResolvedValue({ ids: [] }) },
+}));
+
 vi.mock("@/lib/db/queries/proposals", () => ({
   createProposal: (...args: unknown[]) => mockCreateProposal(...args),
   getProposalById: (...args: unknown[]) => mockGetProposalById(...args),

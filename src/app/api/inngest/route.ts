@@ -6,6 +6,7 @@ import {
   evaluateOperatorSchedule,
 } from "@/inngest/functions/evaluate-schedule";
 import { expireProposalsCron } from "@/inngest/functions/expire-proposals";
+import { evaluateAutoApproval } from "@/inngest/functions/evaluate-auto-approval";
 
 export const { GET, POST, PUT } = serve({
   client: inngest,
@@ -14,5 +15,6 @@ export const { GET, POST, PUT } = serve({
     evaluateScheduleCron,
     evaluateOperatorSchedule,
     expireProposalsCron,
+    evaluateAutoApproval,
   ],
 });

@@ -6,6 +6,7 @@ import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import type { IFspClient } from "@/lib/fsp-client";
 import type { SchedulingTrigger } from "@/lib/db/schema";
 import { AUDIT_EVENT_TYPES } from "@/lib/types/audit";
+import { inngest } from "@/inngest/client";
 import type { EngineExecutionResult } from "./types";
 import { WorkflowRegistry, triggerToWorkflow } from "./workflow-registry";
 import { AuditService } from "./audit";
@@ -69,7 +70,21 @@ export class Orchestrator {
         result
       );
 
-      // 8. Log success
+      // 8. Fire async auto-approval evaluation
+      try {
+        await inngest.send({
+          name: "scheduler/proposal.evaluate-auto-approval",
+          data: {
+            proposalId,
+            operatorId: trigger.operatorId,
+            triggerId: trigger.id,
+          },
+        });
+      } catch {
+        // Non-critical — auto-approval is best-effort
+      }
+
+      // 9. Log success
       await this.auditService.logProposalGenerated(
         trigger.operatorId,
         proposalId,
