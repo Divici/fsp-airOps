@@ -163,3 +163,19 @@ export const updateProspectStatusSchema = z.object({
 export type UpdateProspectStatusRequest = z.infer<
   typeof updateProspectStatusSchema
 >;
+
+// ---- Batch proposal operations -----------------------------------------------
+
+export const batchApproveSchema = z.object({
+  proposalIds: z.array(z.string().uuid()).min(1).max(50),
+  notes: z.string().optional(),
+});
+
+export type BatchApproveRequest = z.infer<typeof batchApproveSchema>;
+
+export const batchDeclineSchema = z.object({
+  proposalIds: z.array(z.string().uuid()).min(1).max(50),
+  reason: z.string().optional(),
+});
+
+export type BatchDeclineRequest = z.infer<typeof batchDeclineSchema>;
