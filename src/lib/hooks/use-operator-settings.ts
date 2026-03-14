@@ -25,6 +25,8 @@ export interface OperatorSettings {
     email: boolean;
     sms: boolean;
   };
+  autoApprovalEnabled: boolean;
+  autoApprovalThreshold: number;
 }
 
 export function useOperatorSettings() {

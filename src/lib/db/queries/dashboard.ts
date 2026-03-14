@@ -27,6 +27,7 @@ export async function getDashboardMetrics(
     activeWorkflowsResult,
     recentActivityCountResult,
     recentActivityRows,
+    autoApprovedResult,
   ] = await Promise.all([
     // Pending proposals
     db
@@ -106,6 +107,19 @@ export async function getDashboardMetrics(
       .where(eq(auditEvents.operatorId, operatorId))
       .orderBy(sql`${auditEvents.createdAt} desc`)
       .limit(10),
+
+    // Auto-approved today (executed proposals with autoApproved flag in validation snapshot)
+    db
+      .select({ count: sql<number>`cast(count(*) as integer)` })
+      .from(proposals)
+      .where(
+        and(
+          eq(proposals.operatorId, operatorId),
+          eq(proposals.status, "executed"),
+          sql`${proposals.validationSnapshot}->>'autoApproved' = 'true'`,
+          gte(proposals.updatedAt, todayStart)
+        )
+      ),
   ]);
 
   const metrics: DashboardMetrics = {
@@ -115,7 +129,7 @@ export async function getDashboardMetrics(
     executedToday: executedTodayResult[0]?.count ?? 0,
     activeWorkflows: activeWorkflowsResult[0]?.count ?? 0,
     recentActivity: recentActivityCountResult[0]?.count ?? 0,
-    autoApprovedToday: 0,
+    autoApprovedToday: autoApprovedResult[0]?.count ?? 0,
   };
 
   const recentActivity: RecentActivityItem[] = recentActivityRows.map((row) => ({

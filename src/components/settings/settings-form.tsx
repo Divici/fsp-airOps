@@ -11,6 +11,7 @@ import type { OperatorSettings } from "@/lib/hooks/use-operator-settings";
 import { RankingWeights } from "./ranking-weights";
 import { SchedulingPreferences } from "./scheduling-preferences";
 import { CommunicationPreferences } from "./communication-preferences";
+import { AutoApprovalSettings } from "./auto-approval-settings";
 import { ResetDefaultsButton } from "./reset-defaults-button";
 
 export function SettingsForm() {
@@ -69,6 +70,13 @@ export function SettingsForm() {
 
       <CommunicationPreferences
         settings={settings}
+        onUpdate={handleUpdate}
+        disabled={isSaving}
+      />
+
+      <AutoApprovalSettings
+        enabled={settings.autoApprovalEnabled}
+        threshold={settings.autoApprovalThreshold}
         onUpdate={handleUpdate}
         disabled={isSaving}
       />

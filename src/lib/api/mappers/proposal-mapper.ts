@@ -93,6 +93,12 @@ function toProposalView(
     ...new Set(actions.map((a) => lookups.userName(a.studentId))),
   ];
 
+  // Extract auto-approval data from validation snapshot
+  const snapshot = proposal.validationSnapshot as {
+    autoApproved?: boolean;
+    decision?: { confidence?: number };
+  } | null;
+
   return {
     id: proposal.id,
     operatorId: proposal.operatorId,
@@ -114,8 +120,8 @@ function toProposalView(
     actionCount: actions.length,
     createdAt: proposal.createdAt.toISOString(),
     expiresAt: proposal.expiresAt?.toISOString() ?? null,
-    autoApproved: false,
-    riskScore: null,
+    autoApproved: snapshot?.autoApproved ?? false,
+    riskScore: snapshot?.decision?.confidence ?? null,
   };
 }
 
