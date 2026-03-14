@@ -16,8 +16,11 @@ import { createApprovalDecision } from "@/lib/db/queries/approvals";
 import { assertTransition } from "@/lib/engine/proposal-lifecycle";
 import { AuditService } from "@/lib/engine/audit";
 import { approveProposalSchema } from "@/lib/types/api";
+import { eq } from "drizzle-orm";
 import { createFspClient } from "@/lib/fsp-client";
 import { ReservationExecutor } from "@/lib/engine/execution/reservation-executor";
+import { schedulingTriggers } from "@/lib/db/schema";
+import { updateProspectStatus } from "@/lib/db/queries/prospects";
 
 export async function POST(
   request: Request,
@@ -81,6 +84,27 @@ export async function POST(
       const fspClient = createFspClient();
       const executor = new ReservationExecutor(db, fspClient, audit);
       const executionResult = await executor.executeProposal(tenant.operatorId, id);
+
+      // If this is a discovery_flight proposal, update the linked prospect status
+      if (proposal.workflowType === "discovery_flight" && proposal.triggerId) {
+        try {
+          const trigger = await db
+            .select()
+            .from(schedulingTriggers)
+            .where(eq(schedulingTriggers.id, proposal.triggerId))
+            .limit(1);
+
+          const prospectId = trigger[0]?.sourceEntityId;
+          if (prospectId && trigger[0]?.sourceEntityType === "prospect_request") {
+            await updateProspectStatus(db, tenant.operatorId, prospectId, "approved");
+            if (executionResult.success) {
+              await updateProspectStatus(db, tenant.operatorId, prospectId, "booked");
+            }
+          }
+        } catch {
+          // Non-critical — don't fail the approval if prospect update fails
+        }
+      }
 
       return NextResponse.json({
         success: true,
