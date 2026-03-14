@@ -1,5 +1,5 @@
-import { ApprovalQueue } from "@/components/proposals/approval-queue";
+import { DashboardOverview } from "@/components/dashboard/dashboard-overview";
 
 export default function DashboardPage() {
-  return <ApprovalQueue title="Approval Queue" defaultStatus="pending" />;
+  return <DashboardOverview />;
 }
