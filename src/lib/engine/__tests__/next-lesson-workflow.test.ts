@@ -41,6 +41,8 @@ const mockSettings: OperatorSettings = {
     waitlist: true,
   },
   communicationPreferences: { email: true, sms: false },
+  autoApprovalEnabled: false,
+  autoApprovalThreshold: 0.7,
   createdAt: new Date("2026-01-01"),
   updatedAt: new Date("2026-01-01"),
 };

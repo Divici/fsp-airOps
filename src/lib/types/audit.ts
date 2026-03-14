@@ -23,6 +23,11 @@ export const AUDIT_EVENT_TYPES = {
   RESERVATION_CREATED: "reservation_created",
   RESERVATION_FAILED: "reservation_failed",
 
+  // Auto-approval events
+  RISK_ASSESSED: "risk_assessed",
+  PROPOSAL_AUTO_APPROVED: "proposal_auto_approved",
+  PROPOSAL_AUTO_DEFERRED: "proposal_auto_deferred",
+
   // Communication events
   EMAIL_SENT: "email_sent",
   EMAIL_FAILED: "email_failed",

@@ -1,0 +1,2 @@
+ALTER TABLE "operator_settings" ADD COLUMN "autoApprovalEnabled" boolean DEFAULT false NOT NULL;--> statement-breakpoint
+ALTER TABLE "operator_settings" ADD COLUMN "autoApprovalThreshold" real DEFAULT 0.7 NOT NULL;

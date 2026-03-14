@@ -115,6 +115,7 @@ export async function getDashboardMetrics(
     executedToday: executedTodayResult[0]?.count ?? 0,
     activeWorkflows: activeWorkflowsResult[0]?.count ?? 0,
     recentActivity: recentActivityCountResult[0]?.count ?? 0,
+    autoApprovedToday: 0,
   };
 
   const recentActivity: RecentActivityItem[] = recentActivityRows.map((row) => ({

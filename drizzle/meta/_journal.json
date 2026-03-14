@@ -8,6 +8,13 @@
       "when": 1773439439154,
       "tag": "0000_rare_gabe_jones",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1773529553381,
+      "tag": "0001_thick_vengeance",
+      "breakpoints": true
     }
   ]
 }

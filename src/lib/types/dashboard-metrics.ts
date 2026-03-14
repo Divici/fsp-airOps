@@ -9,6 +9,7 @@ export interface DashboardMetrics {
   executedToday: number;
   activeWorkflows: number;
   recentActivity: number;
+  autoApprovedToday: number;
 }
 
 export interface RecentActivityItem {

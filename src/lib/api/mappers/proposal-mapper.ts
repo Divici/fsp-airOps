@@ -114,6 +114,8 @@ function toProposalView(
     actionCount: actions.length,
     createdAt: proposal.createdAt.toISOString(),
     expiresAt: proposal.expiresAt?.toISOString() ?? null,
+    autoApproved: false,
+    riskScore: null,
   };
 }
 

@@ -73,6 +73,8 @@ export const updateOperatorSettingsSchema = z.object({
       sms: z.boolean().optional(),
     })
     .optional(),
+  autoApprovalEnabled: z.boolean().optional(),
+  autoApprovalThreshold: z.number().min(0.5).max(0.95).optional(),
 });
 
 export type UpdateOperatorSettingsRequest = z.infer<

@@ -17,4 +17,11 @@ export type Events = {
       context?: Record<string, unknown>;
     };
   };
+  "scheduler/proposal.evaluate-auto-approval": {
+    data: {
+      proposalId: string;
+      operatorId: number;
+      triggerId: string;
+    };
+  };
 };

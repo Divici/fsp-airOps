@@ -20,4 +20,6 @@ export interface ProposalView {
   actionCount: number;
   createdAt: string; // ISO string
   expiresAt: string | null;
+  autoApproved: boolean;
+  riskScore: number | null;
 }

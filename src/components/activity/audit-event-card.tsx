@@ -112,6 +112,21 @@ const eventTypeConfigs: Record<AuditEventType, EventTypeConfig> = {
     colorClass: "text-red-500 bg-red-50 dark:bg-red-950",
     label: "SMS Failed",
   },
+  risk_assessed: {
+    icon: ShieldCheck,
+    colorClass: "text-violet-500 bg-violet-50 dark:bg-violet-950",
+    label: "Risk Assessed",
+  },
+  proposal_auto_approved: {
+    icon: CheckCircle,
+    colorClass: "text-emerald-600 bg-emerald-50 dark:bg-emerald-950",
+    label: "Auto-Approved",
+  },
+  proposal_auto_deferred: {
+    icon: Clock,
+    colorClass: "text-amber-500 bg-amber-50 dark:bg-amber-950",
+    label: "Auto-Deferred",
+  },
 };
 
 function getConfig(eventType: AuditEventType): EventTypeConfig {

@@ -19,4 +19,6 @@ export const DEFAULT_OPERATOR_SETTINGS = {
     email: true,
     sms: false,
   },
+  autoApprovalEnabled: false,
+  autoApprovalThreshold: 0.7,
 } as const;

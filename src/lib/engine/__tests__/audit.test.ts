@@ -240,7 +240,7 @@ describe("AUDIT_EVENT_TYPES", () => {
     expect(AUDIT_EVENT_TYPES.SMS_FAILED).toBe("sms_failed");
   });
 
-  it("has exactly 16 event types", () => {
-    expect(Object.keys(AUDIT_EVENT_TYPES)).toHaveLength(16);
+  it("has exactly 19 event types", () => {
+    expect(Object.keys(AUDIT_EVENT_TYPES)).toHaveLength(19);
   });
 });
