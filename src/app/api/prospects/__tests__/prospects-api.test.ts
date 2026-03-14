@@ -8,10 +8,18 @@ const mockCreateProspectRequest = vi.fn();
 const mockListProspectRequests = vi.fn();
 const mockGetProspectById = vi.fn();
 const mockUpdateProspectStatus = vi.fn();
-const mockCreateTrigger = vi.fn();
+const mockCreateAndDispatch = vi.fn();
 
 vi.mock("@/lib/db", () => ({
-  db: {},
+  db: { update: vi.fn().mockReturnValue({ set: vi.fn().mockReturnValue({ where: vi.fn() }) }) },
+}));
+
+vi.mock("@/lib/db/schema", () => ({
+  prospectRequests: { id: "id" },
+}));
+
+vi.mock("drizzle-orm", () => ({
+  eq: vi.fn(),
 }));
 
 vi.mock("@/lib/db/queries/prospects", () => ({
@@ -24,8 +32,18 @@ vi.mock("@/lib/db/queries/prospects", () => ({
     mockUpdateProspectStatus(...args),
 }));
 
-vi.mock("@/lib/db/queries/triggers", () => ({
-  createTrigger: (...args: unknown[]) => mockCreateTrigger(...args),
+vi.mock("@/lib/fsp-client", () => ({
+  createFspClient: () => ({}),
+}));
+
+vi.mock("@/lib/engine", () => ({
+  createOrchestrator: () => ({}),
+}));
+
+vi.mock("@/lib/engine/trigger-service", () => ({
+  TriggerService: class {
+    createAndDispatch = (...args: unknown[]) => mockCreateAndDispatch(...args);
+  },
 }));
 
 // Mock tenant resolution: default to mock mode with dev fallback
@@ -160,7 +178,13 @@ describe("POST /api/prospects — Create prospect", () => {
   it("creates a prospect request and auto-triggers discovery workflow", async () => {
     const prospect = makeProspect();
     mockCreateProspectRequest.mockResolvedValue(prospect);
-    mockCreateTrigger.mockResolvedValue("trigger-1");
+    mockCreateAndDispatch.mockResolvedValue({
+      triggerId: "trigger-1",
+      dispatched: true,
+      duplicate: false,
+      result: { triggerId: "trigger-1", proposalId: "proposal-1", success: true, auditTrail: [] },
+    });
+    mockUpdateProspectStatus.mockResolvedValue(undefined);
 
     const req = new Request("http://localhost/api/prospects", {
       method: "POST",
@@ -180,9 +204,8 @@ describe("POST /api/prospects — Create prospect", () => {
     expect(res.status).toBe(201);
     expect(body.prospect.firstName).toBe("Jane");
 
-    // Verify trigger was created
-    expect(mockCreateTrigger).toHaveBeenCalledWith(
-      expect.anything(),
+    // Verify trigger was dispatched
+    expect(mockCreateAndDispatch).toHaveBeenCalledWith(
       expect.objectContaining({
         operatorId: 1,
         type: "discovery_request",
@@ -190,6 +213,9 @@ describe("POST /api/prospects — Create prospect", () => {
         sourceEntityType: "prospect_request",
       })
     );
+
+    // Verify prospect status was advanced
+    expect(mockUpdateProspectStatus).toHaveBeenCalled();
   });
 
   it("returns 400 for missing required fields", async () => {

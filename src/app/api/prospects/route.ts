@@ -4,6 +4,7 @@
 // ---------------------------------------------------------------------------
 
 import { NextResponse } from "next/server";
+import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   getTenantFromRequest,
@@ -13,11 +14,15 @@ import {
   createProspectRequest,
   listProspectRequests,
 } from "@/lib/db/queries/prospects";
+import { prospectRequests } from "@/lib/db/schema";
 import {
   createProspectRequestSchema,
   listProspectsQuerySchema,
 } from "@/lib/types/api";
-import { createTrigger } from "@/lib/db/queries/triggers";
+import { createOrchestrator } from "@/lib/engine";
+import { createFspClient } from "@/lib/fsp-client";
+import { TriggerService } from "@/lib/engine/trigger-service";
+import { updateProspectStatus } from "@/lib/db/queries/prospects";
 import { mapProspects } from "@/lib/api/mappers/prospect-mapper";
 
 export async function GET(request: Request) {
@@ -80,8 +85,12 @@ export async function POST(request: Request) {
 
     const prospect = await createProspectRequest(db, parsed.data);
 
-    // Auto-trigger: create a discovery_request trigger for the new prospect
-    await createTrigger(db, {
+    // Auto-trigger: create and dispatch a discovery_request trigger
+    const fspClient = createFspClient();
+    const orchestrator = createOrchestrator(db, fspClient);
+    const triggerService = new TriggerService(db, orchestrator);
+
+    const triggerResult = await triggerService.createAndDispatch({
       operatorId: parsed.data.operatorId,
       type: "discovery_request",
       sourceEntityId: prospect.id,
@@ -97,6 +106,17 @@ export async function POST(request: Request) {
         preferredTimeWindows: prospect.preferredTimeWindows,
       },
     });
+
+    // Advance prospect status: new → processing → proposed (if proposal generated)
+    const proposalId = triggerResult.result?.proposalId;
+    await updateProspectStatus(db, parsed.data.operatorId, prospect.id, "processing");
+    if (proposalId) {
+      await updateProspectStatus(db, parsed.data.operatorId, prospect.id, "proposed");
+      await db
+        .update(prospectRequests)
+        .set({ linkedProposalId: proposalId })
+        .where(eq(prospectRequests.id, prospect.id));
+    }
 
     return NextResponse.json({ prospect }, { status: 201 });
   } catch (error) {
