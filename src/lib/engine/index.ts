@@ -10,6 +10,7 @@ import { AuditService } from "./audit";
 import { RescheduleWorkflowHandler } from "./workflows/reschedule";
 import { NextLessonWorkflowHandler } from "./workflows/next-lesson";
 import { DiscoveryFlightWorkflowHandler } from "./workflows/discovery-flight";
+import { WaitlistWorkflowHandler } from "./workflows/waitlist";
 
 export function createOrchestrator(
   db: PostgresJsDatabase,
@@ -19,6 +20,7 @@ export function createOrchestrator(
   registry.register(new RescheduleWorkflowHandler(fspClient));
   registry.register(new NextLessonWorkflowHandler(fspClient));
   registry.register(new DiscoveryFlightWorkflowHandler(fspClient));
+  registry.register(new WaitlistWorkflowHandler(fspClient));
   const auditService = new AuditService(db);
   return new Orchestrator(db, fspClient, registry, auditService);
 }
