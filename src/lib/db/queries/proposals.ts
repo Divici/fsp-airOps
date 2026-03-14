@@ -189,7 +189,7 @@ export async function listProposals(
       .select()
       .from(proposals)
       .where(whereClause)
-      .orderBy(proposals.createdAt)
+      .orderBy(sql`${proposals.createdAt} desc`)
       .limit(params.limit ?? 50)
       .offset(params.offset ?? 0),
   ]);

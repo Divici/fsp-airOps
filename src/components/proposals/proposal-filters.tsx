@@ -69,48 +69,57 @@ export function ProposalFilters({ defaultStatus = "pending" }: ProposalFiltersPr
   );
 
   return (
-    <div className="flex flex-wrap items-center gap-2" data-testid="proposal-filters">
-      <Select value={filters.status} onValueChange={(v) => setFilter("status", v as string)}>
-        <SelectTrigger size="sm" aria-label="Filter by status">
-          <SelectValue placeholder="Status" />
-        </SelectTrigger>
-        <SelectContent>
-          {statusOptions.map((opt) => (
-            <SelectItem key={opt.value} value={opt.value}>
-              {opt.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+    <div className="flex flex-wrap items-center gap-3" data-testid="proposal-filters">
+      <div className="flex items-center gap-1.5">
+        <span className="text-xs font-medium text-muted-foreground">Status</span>
+        <Select value={filters.status} onValueChange={(v) => setFilter("status", v as string)}>
+          <SelectTrigger size="sm" aria-label="Filter by status">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            {statusOptions.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>
+                {opt.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
-      <Select
-        value={filters.workflowType}
-        onValueChange={(v) => setFilter("type", v as string)}
-      >
-        <SelectTrigger size="sm" aria-label="Filter by workflow type">
-          <SelectValue placeholder="Workflow" />
-        </SelectTrigger>
-        <SelectContent>
-          {workflowOptions.map((opt) => (
-            <SelectItem key={opt.value} value={opt.value}>
-              {opt.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <div className="flex items-center gap-1.5">
+        <span className="text-xs font-medium text-muted-foreground">Type</span>
+        <Select
+          value={filters.workflowType}
+          onValueChange={(v) => setFilter("type", v as string)}
+        >
+          <SelectTrigger size="sm" aria-label="Filter by workflow type">
+            <SelectValue placeholder="Workflow" />
+          </SelectTrigger>
+          <SelectContent>
+            {workflowOptions.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>
+                {opt.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
-      <Select value={filters.dateRange} onValueChange={(v) => setFilter("date", v as string)}>
-        <SelectTrigger size="sm" aria-label="Filter by date range">
-          <SelectValue placeholder="Date" />
-        </SelectTrigger>
-        <SelectContent>
-          {dateOptions.map((opt) => (
-            <SelectItem key={opt.value} value={opt.value}>
-              {opt.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <div className="flex items-center gap-1.5">
+        <span className="text-xs font-medium text-muted-foreground">Period</span>
+        <Select value={filters.dateRange} onValueChange={(v) => setFilter("date", v as string)}>
+          <SelectTrigger size="sm" aria-label="Filter by date range">
+            <SelectValue placeholder="Date" />
+          </SelectTrigger>
+          <SelectContent>
+            {dateOptions.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>
+                {opt.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
     </div>
   );
 }
