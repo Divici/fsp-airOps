@@ -60,8 +60,13 @@ export function useBatchApprove() {
         body: JSON.stringify({ proposalIds: ids }),
       });
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["proposals"] });
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["proposals"] }),
+        queryClient.invalidateQueries({ queryKey: ["dashboard-metrics"] }),
+        queryClient.invalidateQueries({ queryKey: ["recent-activity"] }),
+        queryClient.invalidateQueries({ queryKey: ["audit-feed"] }),
+      ]);
     },
   });
 }
@@ -82,8 +87,13 @@ export function useBatchDecline() {
         body: JSON.stringify({ proposalIds: ids, reason }),
       });
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["proposals"] });
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["proposals"] }),
+        queryClient.invalidateQueries({ queryKey: ["dashboard-metrics"] }),
+        queryClient.invalidateQueries({ queryKey: ["recent-activity"] }),
+        queryClient.invalidateQueries({ queryKey: ["audit-feed"] }),
+      ]);
     },
   });
 }

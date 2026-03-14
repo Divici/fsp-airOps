@@ -26,11 +26,14 @@ export function useApproveProposal() {
         method: "POST",
       });
     },
-    onSuccess: (_data, proposalId) => {
-      void queryClient.invalidateQueries({
-        queryKey: ["proposal", proposalId],
-      });
-      void queryClient.invalidateQueries({ queryKey: ["proposals"] });
+    onSuccess: async (_data, proposalId) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["proposal", proposalId] }),
+        queryClient.invalidateQueries({ queryKey: ["proposals"] }),
+        queryClient.invalidateQueries({ queryKey: ["dashboard-metrics"] }),
+        queryClient.invalidateQueries({ queryKey: ["recent-activity"] }),
+        queryClient.invalidateQueries({ queryKey: ["audit-feed"] }),
+      ]);
     },
   });
 }
@@ -51,11 +54,14 @@ export function useDeclineProposal() {
         body: JSON.stringify({ reason }),
       });
     },
-    onSuccess: (_data, { proposalId }) => {
-      void queryClient.invalidateQueries({
-        queryKey: ["proposal", proposalId],
-      });
-      void queryClient.invalidateQueries({ queryKey: ["proposals"] });
+    onSuccess: async (_data, { proposalId }) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["proposal", proposalId] }),
+        queryClient.invalidateQueries({ queryKey: ["proposals"] }),
+        queryClient.invalidateQueries({ queryKey: ["dashboard-metrics"] }),
+        queryClient.invalidateQueries({ queryKey: ["recent-activity"] }),
+        queryClient.invalidateQueries({ queryKey: ["audit-feed"] }),
+      ]);
     },
   });
 }
