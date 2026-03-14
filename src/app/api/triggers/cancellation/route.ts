@@ -43,13 +43,16 @@ export async function POST(request: Request) {
       sourceEntityId: data.cancelledReservationId,
       sourceEntityType: "reservation",
       context: {
-        cancelledReservationId: data.cancelledReservationId,
-        cancelledStudentId: data.cancelledStudentId,
-        cancelledInstructorId: data.cancelledInstructorId,
-        cancelledAircraftId: data.cancelledAircraftId,
+        // Map API fields to CancelledReservationContext shape
+        reservationId: data.cancelledReservationId,
+        studentId: data.cancelledStudentId,
+        studentName: data.cancelledStudentId, // resolved later if needed
+        instructorId: data.cancelledInstructorId,
+        aircraftId: data.cancelledAircraftId,
+        activityTypeId: "at-1", // default mock activity type
+        locationId: data.locationId,
         originalStart: data.originalStart,
         originalEnd: data.originalEnd,
-        locationId: data.locationId,
       },
     });
 
