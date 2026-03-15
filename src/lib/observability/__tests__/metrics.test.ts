@@ -108,6 +108,68 @@ describe("MetricsCollector", () => {
     });
   });
 
+  describe("toPrometheusFormat", () => {
+    it("formats counters with _total suffix and TYPE comment", () => {
+      collector.increment("requests", {}, 42);
+
+      const output = collector.toPrometheusFormat();
+
+      expect(output).toContain("# HELP fsp_requests_total Counter for requests");
+      expect(output).toContain("# TYPE fsp_requests_total counter");
+      expect(output).toContain("fsp_requests_total 42");
+    });
+
+    it("formats gauges without suffix", () => {
+      collector.gauge("active_users", 7);
+
+      const output = collector.toPrometheusFormat();
+
+      expect(output).toContain("# HELP fsp_active_users Gauge for active_users");
+      expect(output).toContain("# TYPE fsp_active_users gauge");
+      expect(output).toContain("fsp_active_users 7");
+    });
+
+    it("formats timings with _count, _sum, _min, _max suffixes", () => {
+      collector.timing("latency", 100);
+      collector.timing("latency", 200);
+      collector.timing("latency", 300);
+
+      const output = collector.toPrometheusFormat();
+
+      expect(output).toContain("# HELP fsp_latency Timing summary for latency");
+      expect(output).toContain("# TYPE fsp_latency summary");
+      expect(output).toContain("fsp_latency_count 3");
+      expect(output).toContain("fsp_latency_sum 600");
+      expect(output).toContain("fsp_latency_min 100");
+      expect(output).toContain("fsp_latency_max 300");
+    });
+
+    it("returns only a newline for empty metrics", () => {
+      expect(collector.toPrometheusFormat()).toBe("\n");
+    });
+
+    it("normalizes camelCase names to snake_case", () => {
+      collector.increment("myMetricName");
+
+      const output = collector.toPrometheusFormat();
+
+      expect(output).toContain("fsp_my_metric_name_total");
+    });
+
+    it("includes all metric types in a single output", () => {
+      collector.increment("c1");
+      collector.gauge("g1", 10);
+      collector.timing("t1", 50);
+
+      const output = collector.toPrometheusFormat();
+
+      expect(output).toContain("fsp_c1_total");
+      expect(output).toContain("fsp_g1 10");
+      expect(output).toContain("fsp_t1_count 1");
+      expect(output).toContain("fsp_t1_sum 50");
+    });
+  });
+
   describe("reset", () => {
     it("clears all metrics", () => {
       collector.increment("c1");
