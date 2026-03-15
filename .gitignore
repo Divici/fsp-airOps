@@ -51,4 +51,16 @@ Thumbs.db
 
 # Study guide (personal reference)
 STUDY_GUIDE.md
-.claude/worktrees/
+
+# Claude Code config
+.claude/
+
+# Memory bank (personal context)
+memory-bank/
+
+# Internal docs (not for public repo)
+agentic-scheduler-prd.md
+api-appendix.md
+env.example
+PRESEARCH.md
+decisions/
