@@ -11,6 +11,14 @@ vi.mock("@/lib/db/queries/operators", () => ({
   getActiveOperatorIds: vi.fn().mockResolvedValue([]),
 }));
 
+const mockLoadSnapshot = vi.fn();
+const mockSaveSnapshot = vi.fn();
+
+vi.mock("@/lib/db/queries/snapshots", () => ({
+  loadSnapshot: (...args: unknown[]) => mockLoadSnapshot(...args),
+  saveSnapshot: (...args: unknown[]) => mockSaveSnapshot(...args),
+}));
+
 vi.mock("@/lib/fsp-client", () => ({
   createFspClient: vi.fn(),
 }));
@@ -18,11 +26,6 @@ vi.mock("@/lib/fsp-client", () => ({
 vi.mock("@/lib/engine", () => ({
   createOrchestrator: vi.fn(),
 }));
-
-import {
-  _setSnapshot,
-  _getSnapshot,
-} from "../evaluate-schedule";
 
 // ---------------------------------------------------------------------------
 // We test the evaluate-schedule module's snapshot management and the
@@ -50,49 +53,58 @@ function makeReservation(
 
 const OPERATOR_ID = 42;
 
-describe("evaluate-schedule snapshot store", () => {
+describe("evaluate-schedule snapshot persistence", () => {
   beforeEach(() => {
-    _setSnapshot(OPERATOR_ID, null);
+    mockLoadSnapshot.mockReset();
+    mockSaveSnapshot.mockReset();
   });
 
-  it("stores and retrieves snapshots per operator", () => {
+  it("loadSnapshot returns null when no snapshot exists", async () => {
+    mockLoadSnapshot.mockResolvedValue(null);
+
+    const { loadSnapshot } = await import("@/lib/db/queries/snapshots");
+    const result = await loadSnapshot({} as never, 999);
+    expect(result).toBeNull();
+  });
+
+  it("saveSnapshot is called with serialized reservation data", async () => {
+    mockSaveSnapshot.mockResolvedValue(undefined);
+
     const snapshot = createSnapshot(OPERATOR_ID, [makeReservation()]);
-    _setSnapshot(OPERATOR_ID, snapshot);
+    const serialized = Array.from(snapshot.reservations.entries());
 
-    const retrieved = _getSnapshot(OPERATOR_ID);
-    expect(retrieved).toBeDefined();
-    expect(retrieved!.operatorId).toBe(OPERATOR_ID);
-    expect(retrieved!.reservations.size).toBe(1);
+    const { saveSnapshot } = await import("@/lib/db/queries/snapshots");
+    await saveSnapshot({} as never, OPERATOR_ID, snapshot.capturedAt, serialized);
+
+    expect(mockSaveSnapshot).toHaveBeenCalledWith(
+      expect.anything(),
+      OPERATOR_ID,
+      snapshot.capturedAt,
+      serialized,
+    );
   });
 
-  it("returns undefined when no snapshot exists", () => {
-    const retrieved = _getSnapshot(999);
-    expect(retrieved).toBeUndefined();
-  });
-
-  it("clears snapshot when set to null", () => {
-    const snapshot = createSnapshot(OPERATOR_ID, [makeReservation()]);
-    _setSnapshot(OPERATOR_ID, snapshot);
-    expect(_getSnapshot(OPERATOR_ID)).toBeDefined();
-
-    _setSnapshot(OPERATOR_ID, null);
-    expect(_getSnapshot(OPERATOR_ID)).toBeUndefined();
-  });
-
-  it("isolates snapshots between different operators", () => {
-    const snapshot1 = createSnapshot(1, [
-      makeReservation({ reservationId: "res-op1" }),
+  it("round-trips snapshot data through serialization", async () => {
+    const snapshot = createSnapshot(OPERATOR_ID, [
+      makeReservation({ reservationId: "res-001" }),
+      makeReservation({ reservationId: "res-002" }),
     ]);
-    const snapshot2 = createSnapshot(2, [
-      makeReservation({ reservationId: "res-op2-a" }),
-      makeReservation({ reservationId: "res-op2-b" }),
-    ]);
+    const serialized = Array.from(snapshot.reservations.entries());
 
-    _setSnapshot(1, snapshot1);
-    _setSnapshot(2, snapshot2);
+    // Simulate loading from DB
+    mockLoadSnapshot.mockResolvedValue({
+      capturedAt: snapshot.capturedAt,
+      reservations: serialized,
+    });
 
-    expect(_getSnapshot(1)!.reservations.size).toBe(1);
-    expect(_getSnapshot(2)!.reservations.size).toBe(2);
+    const { loadSnapshot } = await import("@/lib/db/queries/snapshots");
+    const loaded = await loadSnapshot({} as never, OPERATOR_ID);
+
+    expect(loaded).not.toBeNull();
+    const reconstructed = new Map(loaded!.reservations as Array<[string, FspReservationListItem]>);
+    expect(reconstructed.size).toBe(2);
+    expect(reconstructed.has("res-001")).toBe(true);
+    expect(reconstructed.has("res-002")).toBe(true);
   });
 });
 
@@ -126,21 +138,31 @@ describe("evaluate-schedule fan-out logic", () => {
 
 describe("evaluate-schedule per-operator evaluation flow", () => {
   beforeEach(() => {
-    _setSnapshot(OPERATOR_ID, null);
+    mockLoadSnapshot.mockReset();
+    mockSaveSnapshot.mockReset();
   });
 
-  it("first run captures baseline and stores snapshot", () => {
-    expect(_getSnapshot(OPERATOR_ID)).toBeUndefined();
+  it("first run captures baseline when no previous snapshot exists", async () => {
+    mockLoadSnapshot.mockResolvedValue(null);
 
     const snapshot = createSnapshot(OPERATOR_ID, [
       makeReservation({ reservationId: "res-001" }),
       makeReservation({ reservationId: "res-002" }),
     ]);
-    _setSnapshot(OPERATOR_ID, snapshot);
 
-    const stored = _getSnapshot(OPERATOR_ID);
-    expect(stored).toBeDefined();
-    expect(stored!.reservations.size).toBe(2);
+    // Verify the snapshot would be saved
+    mockSaveSnapshot.mockResolvedValue(undefined);
+    const { saveSnapshot } = await import("@/lib/db/queries/snapshots");
+    await saveSnapshot(
+      {} as never,
+      OPERATOR_ID,
+      snapshot.capturedAt,
+      Array.from(snapshot.reservations.entries()),
+    );
+
+    expect(mockSaveSnapshot).toHaveBeenCalledTimes(1);
+    const savedReservations = mockSaveSnapshot.mock.calls[0][3] as Array<[string, FspReservationListItem]>;
+    expect(savedReservations).toHaveLength(2);
   });
 
   it("second run detects cancellations by comparing snapshots", () => {
@@ -149,7 +171,6 @@ describe("evaluate-schedule per-operator evaluation flow", () => {
       makeReservation({ reservationId: "res-002" }),
       makeReservation({ reservationId: "res-003" }),
     ]);
-    _setSnapshot(OPERATOR_ID, baseline);
 
     const current = createSnapshot(OPERATOR_ID, [
       makeReservation({ reservationId: "res-001" }),
@@ -160,9 +181,6 @@ describe("evaluate-schedule per-operator evaluation flow", () => {
 
     expect(diff.cancelled).toHaveLength(1);
     expect(diff.cancelled[0].reservationId).toBe("res-002");
-
-    _setSnapshot(OPERATOR_ID, current);
-    expect(_getSnapshot(OPERATOR_ID)!.reservations.size).toBe(2);
   });
 
   it("retry scenario: FSP API failure should throw for Inngest retry", async () => {

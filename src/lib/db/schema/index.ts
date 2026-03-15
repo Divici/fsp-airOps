@@ -34,8 +34,11 @@ export {
   prospectRequestsRelations,
 } from "./prospects";
 
+export { scheduleSnapshots } from "./snapshots";
+
 // Inferred types for each table
 import type { operatorSettings } from "./operator-settings";
+import type { scheduleSnapshots } from "./snapshots";
 import type { schedulingTriggers } from "./triggers";
 import type { proposals, proposalActions } from "./proposals";
 import type { approvalDecisions } from "./approvals";
@@ -66,3 +69,6 @@ export type NewCommunicationRecord = InferInsertModel<typeof communicationRecord
 
 export type ProspectRequest = InferSelectModel<typeof prospectRequests>;
 export type NewProspectRequest = InferInsertModel<typeof prospectRequests>;
+
+export type ScheduleSnapshot = InferSelectModel<typeof scheduleSnapshots>;
+export type NewScheduleSnapshot = InferInsertModel<typeof scheduleSnapshots>;

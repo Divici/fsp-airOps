@@ -9,6 +9,7 @@
 import { inngest } from "../client";
 import { db } from "@/lib/db";
 import { getActiveOperatorIds } from "@/lib/db/queries/operators";
+import { loadSnapshot, saveSnapshot } from "@/lib/db/queries/snapshots";
 import { CancellationDetector } from "@/lib/engine/detection/cancellation-detector";
 import { createSnapshot } from "@/lib/engine/detection/schedule-snapshot";
 import type { ScheduleSnapshot } from "@/lib/engine/detection/schedule-snapshot";
@@ -16,32 +17,7 @@ import { TriggerService } from "@/lib/engine/trigger-service";
 import { createOrchestrator } from "@/lib/engine";
 import { createFspClient } from "@/lib/fsp-client";
 
-// ---------------------------------------------------------------------------
-// In-memory snapshot store (per operator). In production this would be
-// persisted to a database or cache, but for MVP in-memory is sufficient
-// since the cron runs frequently and a cold start just skips one cycle.
-// ---------------------------------------------------------------------------
-const snapshotStore = new Map<number, ScheduleSnapshot>();
-
-/** Exposed for testing — allows injecting/clearing snapshots. */
-export function _setSnapshot(
-  operatorId: number,
-  snapshot: ScheduleSnapshot | null,
-): void {
-  if (snapshot) {
-    snapshotStore.set(operatorId, snapshot);
-  } else {
-    snapshotStore.delete(operatorId);
-  }
-}
-
-export function _getSnapshot(
-  operatorId: number,
-): ScheduleSnapshot | undefined {
-  return snapshotStore.get(operatorId);
-}
-
-/** Build default query params for a reservation window (today ± 7 days). */
+/** Build default query params for a reservation window (today +/- 7 days). */
 function defaultQueryParams() {
   const now = new Date();
   const start = new Date(now);
@@ -125,12 +101,34 @@ export const evaluateOperatorSchedule = inngest.createFunction(
       currentSnapshot.reservations.map(([, r]) => r),
     );
 
-    // Step 2: Compare with previous snapshot and detect cancellations
-    const previousSnapshot = snapshotStore.get(operatorId);
+    // Step 2: Load previous snapshot from DB and compare
+    const dbSnapshot = await step.run("load-previous-snapshot", async () => {
+      return loadSnapshot(db, operatorId);
+    });
+
+    let previousSnapshot: ScheduleSnapshot | null = null;
+
+    if (dbSnapshot) {
+      previousSnapshot = {
+        operatorId,
+        capturedAt: new Date(dbSnapshot.capturedAt),
+        reservations: new Map(
+          dbSnapshot.reservations as Array<[string, Parameters<typeof createSnapshot>[1][number]]>,
+        ),
+      };
+    }
 
     if (!previousSnapshot) {
       // First run — store baseline, no comparison possible
-      snapshotStore.set(operatorId, reconstructed);
+      await step.run("save-baseline-snapshot", async () => {
+        await saveSnapshot(
+          db,
+          operatorId,
+          reconstructed.capturedAt,
+          Array.from(reconstructed.reservations.entries()),
+        );
+      });
+
       return {
         operatorId,
         status: "baseline_captured",
@@ -145,7 +143,7 @@ export const evaluateOperatorSchedule = inngest.createFunction(
         const { compareSnapshots } = await import(
           "@/lib/engine/detection/schedule-snapshot"
         );
-        const diff = compareSnapshots(previousSnapshot, reconstructed);
+        const diff = compareSnapshots(previousSnapshot!, reconstructed);
 
         return {
           cancelledCount: diff.cancelled.length,
@@ -207,8 +205,15 @@ export const evaluateOperatorSchedule = inngest.createFunction(
       triggerResults.push(...results);
     }
 
-    // Update stored snapshot
-    snapshotStore.set(operatorId, reconstructed);
+    // Update stored snapshot in DB
+    await step.run("save-updated-snapshot", async () => {
+      await saveSnapshot(
+        db,
+        operatorId,
+        reconstructed.capturedAt,
+        Array.from(reconstructed.reservations.entries()),
+      );
+    });
 
     return {
       operatorId,

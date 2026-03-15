@@ -15,6 +15,13 @@
       "when": 1773529553381,
       "tag": "0001_thick_vengeance",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1773538917045,
+      "tag": "0002_rich_black_knight",
+      "breakpoints": true
     }
   ]
 }
