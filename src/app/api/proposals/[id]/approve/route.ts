@@ -21,6 +21,7 @@ import { createFspClient } from "@/lib/fsp-client";
 import { ReservationExecutor } from "@/lib/engine/execution/reservation-executor";
 import { schedulingTriggers } from "@/lib/db/schema";
 import { updateProspectStatus } from "@/lib/db/queries/prospects";
+import { sendApprovalNotification } from "@/lib/comms";
 
 export async function POST(
   request: Request,
@@ -105,6 +106,16 @@ export async function POST(
           // Non-critical — don't fail the approval if prospect update fails
         }
       }
+
+      // Fire-and-forget notification — don't block the response
+      sendApprovalNotification({
+        db,
+        operatorId: tenant.operatorId,
+        proposal,
+        executionSuccess: executionResult.success,
+      }).catch(() => {
+        // Swallowed intentionally — notification failure is non-critical
+      });
 
       return NextResponse.json({
         success: true,

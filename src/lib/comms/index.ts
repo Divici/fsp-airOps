@@ -8,6 +8,10 @@ export { FspEmailProvider } from "./email-provider";
 export { SmsProvider } from "./sms-provider";
 export { renderTemplate, getTemplate, listTemplateIds } from "./templates";
 export type { MessageTemplate } from "./templates";
+export {
+  sendApprovalNotification,
+} from "./send-approval-notification";
+export type { ApprovalNotificationParams } from "./send-approval-notification";
 export type {
   CommunicationChannel,
   CommunicationProvider,
