@@ -284,6 +284,7 @@ describe("Foundation Integration", () => {
         discovery_flight: true,
         next_lesson: true,
         waitlist: true,
+        weather_disruption: false,
       });
 
       expect(DEFAULT_OPERATOR_SETTINGS.communicationPreferences).toEqual({

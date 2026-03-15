@@ -10,6 +10,7 @@ import { createProposal } from "@/lib/db/queries/proposals";
 /** Priority weights by workflow type (higher = more urgent). */
 const WORKFLOW_PRIORITY: Record<WorkflowType, number> = {
   reschedule: 80,
+  weather_disruption: 90,
   discovery_flight: 60,
   next_lesson: 40,
   inactivity_outreach: 30,

@@ -41,6 +41,8 @@ export function triggerToWorkflow(
       return "next_lesson";
     case "opening_detected":
       return "waitlist";
+    case "weather_detected":
+      return "weather_disruption";
     case "manual":
       return null;
     default: {

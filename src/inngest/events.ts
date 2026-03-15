@@ -24,4 +24,10 @@ export type Events = {
       triggerId: string;
     };
   };
+  "scheduler/weather.check": {
+    data: {
+      operatorId: number;
+      locationIcao: string;
+    };
+  };
 };

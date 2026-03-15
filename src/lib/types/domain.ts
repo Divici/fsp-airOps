@@ -8,13 +8,15 @@ export type WorkflowType =
   | "discovery_flight"
   | "next_lesson"
   | "waitlist"
-  | "inactivity_outreach";
+  | "inactivity_outreach"
+  | "weather_disruption";
 
 export type TriggerType =
   | "cancellation"
   | "discovery_request"
   | "lesson_complete"
   | "opening_detected"
+  | "weather_detected"
   | "manual";
 
 export type TriggerStatus =

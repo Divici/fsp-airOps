@@ -14,6 +14,7 @@ export const DEFAULT_OPERATOR_SETTINGS = {
     discovery_flight: true,
     next_lesson: true,
     waitlist: true,
+    weather_disruption: false,
   },
   communicationPreferences: {
     email: true,
@@ -26,6 +27,8 @@ export const DEFAULT_OPERATOR_SETTINGS = {
     enabled: boolean;
   }>,
   communicationTemplates: null as Record<string, { subject: string; body: string }> | null,
+  weatherMinCeiling: 1000,
+  weatherMinVisibility: 3,
   autoApprovalEnabled: false,
   autoApprovalThreshold: 0.7,
 } as const;
