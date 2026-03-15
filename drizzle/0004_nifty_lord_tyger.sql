@@ -1,0 +1,1 @@
+ALTER TABLE "operator_settings" ADD COLUMN "communicationTemplates" jsonb;

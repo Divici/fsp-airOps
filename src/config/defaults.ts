@@ -25,6 +25,7 @@ export const DEFAULT_OPERATOR_SETTINGS = {
     weight: number;
     enabled: boolean;
   }>,
+  communicationTemplates: null as Record<string, { subject: string; body: string }> | null,
   autoApprovalEnabled: false,
   autoApprovalThreshold: 0.7,
 } as const;

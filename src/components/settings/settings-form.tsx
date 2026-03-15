@@ -11,6 +11,7 @@ import type { OperatorSettings } from "@/lib/hooks/use-operator-settings";
 import { RankingWeights } from "./ranking-weights";
 import { SchedulingPreferences } from "./scheduling-preferences";
 import { CommunicationPreferences } from "./communication-preferences";
+import { TemplateEditor } from "./template-editor";
 import { AutoApprovalSettings } from "./auto-approval-settings";
 import { ResetDefaultsButton } from "./reset-defaults-button";
 
@@ -71,6 +72,19 @@ export function SettingsForm() {
       <CommunicationPreferences
         settings={settings}
         onUpdate={handleUpdate}
+        disabled={isSaving}
+      />
+
+      <TemplateEditor
+        templates={settings.communicationTemplates ? Object.fromEntries(
+          Object.entries(settings.communicationTemplates).map(([id, t]) => [
+            id,
+            { ...t, id, variables: [], isCustom: true },
+          ])
+        ) : null}
+        onSave={(templates) =>
+          handleUpdate({ communicationTemplates: templates })
+        }
         disabled={isSaving}
       />
 

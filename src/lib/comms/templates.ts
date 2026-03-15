@@ -63,3 +63,58 @@ export function renderTemplate(
 export function listTemplateIds(): string[] {
   return Object.keys(templates);
 }
+
+/** Custom template override shape stored in operator_settings. */
+export type OperatorTemplateOverrides = Record<
+  string,
+  { subject: string; body: string }
+> | null;
+
+/**
+ * Resolve a template for a specific operator.
+ * If the operator has a custom override for this template, use it;
+ * otherwise fall back to the default hardcoded template.
+ */
+export function getTemplateForOperator(
+  templateName: string,
+  operatorTemplates: OperatorTemplateOverrides
+): MessageTemplate | undefined {
+  if (operatorTemplates && templateName in operatorTemplates) {
+    const custom = operatorTemplates[templateName];
+    return {
+      id: templateName,
+      subject: custom.subject,
+      body: custom.body,
+    };
+  }
+  return templates[templateName];
+}
+
+/**
+ * Get the default (hardcoded) templates registry.
+ * Useful for the template editor to show all available templates.
+ */
+export function getDefaultTemplates(): Record<string, MessageTemplate> {
+  return { ...templates };
+}
+
+/**
+ * Extract variable names from a template body/subject string.
+ * Returns unique variable names found in {{variable}} placeholders.
+ */
+export function extractTemplateVariables(template: MessageTemplate): string[] {
+  const vars = new Set<string>();
+  const regex = /\{\{(\w+)\}\}/g;
+  let match: RegExpExecArray | null;
+
+  const texts = [template.body];
+  if (template.subject) texts.push(template.subject);
+
+  for (const text of texts) {
+    while ((match = regex.exec(text)) !== null) {
+      vars.add(match[1]);
+    }
+  }
+
+  return Array.from(vars);
+}

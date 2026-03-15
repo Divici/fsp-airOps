@@ -32,6 +32,7 @@ function toSettingsResponse(s: OperatorSettings) {
     enabledWorkflows: s.enabledWorkflows,
     communicationPreferences: s.communicationPreferences,
     customWeights: s.customWeights,
+    communicationTemplates: s.communicationTemplates ?? null,
     autoApprovalEnabled: s.autoApprovalEnabled,
     autoApprovalThreshold: s.autoApprovalThreshold,
   };

@@ -40,6 +40,7 @@ const mockSettings: OperatorSettings = {
     waitlist: true,
   },
   communicationPreferences: { email: true, sms: false },
+    communicationTemplates: null,
   autoApprovalEnabled: false,
   autoApprovalThreshold: 0.7,
     customWeights: [],

@@ -31,6 +31,7 @@ export interface OperatorSettings {
     weight: number;
     enabled: boolean;
   }>;
+  communicationTemplates: Record<string, { subject: string; body: string }> | null;
   autoApprovalEnabled: boolean;
   autoApprovalThreshold: number;
 }

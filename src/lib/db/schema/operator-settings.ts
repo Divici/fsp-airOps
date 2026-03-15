@@ -47,6 +47,8 @@ export const operatorSettings = pgTable(
           enabled: boolean;
         }>
       >(),
+    communicationTemplates:
+      jsonb().$type<Record<string, { subject: string; body: string }> | null>(),
     autoApprovalEnabled: boolean().notNull().default(false),
     autoApprovalThreshold: real().notNull().default(0.7),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),

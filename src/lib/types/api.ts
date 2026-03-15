@@ -88,6 +88,16 @@ export const updateOperatorSettingsSchema = z.object({
       }),
     )
     .optional(),
+  communicationTemplates: z
+    .record(
+      z.string(),
+      z.object({
+        subject: z.string(),
+        body: z.string(),
+      })
+    )
+    .nullable()
+    .optional(),
   autoApprovalEnabled: z.boolean().optional(),
   autoApprovalThreshold: z.number().min(0.5).max(0.95).optional(),
 });
