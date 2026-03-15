@@ -14,6 +14,8 @@ import { TriggerService } from "@/lib/engine/trigger-service";
 import { createOrchestrator } from "@/lib/engine";
 import { createFspClient } from "@/lib/fsp-client";
 import { createWeatherService } from "@/lib/weather";
+import { prioritizeFlights } from "@/lib/ai/flight-prioritizer";
+import type { FlightForPrioritization } from "@/lib/ai/flight-prioritizer";
 
 // ---------------------------------------------------------------------------
 // Cron: Fan-out — runs every 30 minutes, sends one event per operator+location
@@ -133,7 +135,34 @@ export const checkOperatorWeather = inngest.createFunction(
       };
     }
 
-    // Step 3: Create triggers for each affected flight
+    // Step 3: Prioritize affected flights using AI
+    const prioritized = await step.run(
+      "prioritize-affected-flights",
+      async () => {
+        // Enrich flight data for prioritization
+        const flightsForPrioritization: FlightForPrioritization[] =
+          affected.map((f) => ({
+            reservationId: f.reservationId,
+            studentId: f.studentId,
+            studentName: f.studentName,
+            instructorName: f.instructorId ?? "Unknown",
+            startTime: f.startTime,
+            daysSinceLastFlight: null, // Not available from detector; AI uses other signals
+            trainingStage: undefined,
+            checkrideDateDays: null,
+            totalFlightHours: undefined,
+          }));
+
+        const ranked = await prioritizeFlights(flightsForPrioritization);
+
+        // Serialize for Inngest step transport
+        return ranked.map((r) => ({
+          ...r,
+        }));
+      },
+    );
+
+    // Step 4: Create triggers for each affected flight in priority order
     const triggerResults = await step.run(
       "create-weather-triggers",
       async () => {
@@ -142,7 +171,20 @@ export const checkOperatorWeather = inngest.createFunction(
         const triggerService = new TriggerService(db, orchestrator);
         const outcomes = [];
 
-        for (const flight of affected) {
+        // Build a lookup from prioritized results
+        const priorityMap = new Map(
+          prioritized.map((p) => [p.reservationId, p]),
+        );
+
+        // Process in priority order (prioritized is already sorted by urgency)
+        for (const pFlight of prioritized) {
+          const flight = affected.find(
+            (f) => f.reservationId === pFlight.reservationId,
+          );
+          if (!flight) continue;
+
+          const priority = priorityMap.get(flight.reservationId);
+
           const result = await triggerService.createAndDispatch({
             operatorId,
             type: "weather_detected",
@@ -158,6 +200,8 @@ export const checkOperatorWeather = inngest.createFunction(
               originalEnd: flight.endTime,
               reason: flight.reason,
               locationIcao,
+              urgencyScore: priority?.urgencyScore,
+              urgencyReasoning: priority?.reasoning,
             },
           });
 
@@ -166,6 +210,7 @@ export const checkOperatorWeather = inngest.createFunction(
             triggerId: result.triggerId,
             dispatched: result.dispatched,
             duplicate: result.duplicate,
+            urgencyScore: priority?.urgencyScore,
           });
         }
 

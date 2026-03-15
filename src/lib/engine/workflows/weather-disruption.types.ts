@@ -14,4 +14,8 @@ export interface WeatherDisruptionContext {
   reason: string;
   weatherClearsAt: string;
   activityTypeId?: string;
+  /** AI-assigned urgency score (0-100). Populated by flight prioritizer. */
+  urgencyScore?: number;
+  /** AI reasoning for this flight's priority. */
+  urgencyReasoning?: string;
 }

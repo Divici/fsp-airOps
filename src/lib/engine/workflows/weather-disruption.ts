@@ -88,6 +88,11 @@ export class WeatherDisruptionWorkflowHandler implements WorkflowHandler {
     // Build weather-specific rationale
     const clearsTimeStr = this.formatTime(weatherClearsAt);
 
+    // Include AI urgency reasoning if available
+    const urgencyPrefix = weatherContext.urgencyReasoning
+      ? `Priority: ${weatherContext.urgencyReasoning} `
+      : "";
+
     // Map to proposal actions
     const proposedActions: ProposalActionInput[] = topN.map((slot, i) => ({
       rank: i + 1,
@@ -99,17 +104,23 @@ export class WeatherDisruptionWorkflowHandler implements WorkflowHandler {
       instructorId: slot.instructorId,
       aircraftId: slot.aircraftId,
       activityTypeId: weatherContext.activityTypeId,
-      explanation: `${weatherContext.reason}. Moving ${weatherContext.studentName}'s lesson to ${this.formatTime(slot.startTime)} when VFR conditions return.${slot.instructorId === weatherContext.instructorId ? ` Same instructor is available.` : ""}`,
+      explanation: `${urgencyPrefix}${weatherContext.reason}. Moving ${weatherContext.studentName}'s lesson to ${this.formatTime(slot.startTime)} when VFR conditions return.${slot.instructorId === weatherContext.instructorId ? ` Same instructor is available.` : ""}`,
     }));
+
+    const urgencySuffix = weatherContext.urgencyScore !== undefined
+      ? ` Urgency: ${weatherContext.urgencyScore}/100.`
+      : "";
 
     return {
       proposedActions,
-      summary: `IFR conditions forecast until ${clearsTimeStr}. Found ${proposedActions.length} alternative slot(s) for ${weatherContext.studentName}.`,
+      summary: `IFR conditions forecast until ${clearsTimeStr}. Found ${proposedActions.length} alternative slot(s) for ${weatherContext.studentName}.${urgencySuffix}`,
       rawData: {
         weatherContext,
         slotsFound: slots.length,
         slotsRanked: ranked.length,
         weatherClearsAt: weatherContext.weatherClearsAt,
+        urgencyScore: weatherContext.urgencyScore,
+        urgencyReasoning: weatherContext.urgencyReasoning,
       },
     };
   }
