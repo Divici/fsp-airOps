@@ -11,6 +11,10 @@ import {
   detectInactivityCron,
   evaluateOperatorInactivity,
 } from "@/inngest/functions/detect-inactivity";
+import {
+  checkWeatherCron,
+  checkOperatorWeather,
+} from "@/inngest/functions/check-weather";
 
 export const { GET, POST, PUT } = serve({
   client: inngest,
@@ -22,5 +26,7 @@ export const { GET, POST, PUT } = serve({
     evaluateAutoApproval,
     detectInactivityCron,
     evaluateOperatorInactivity,
+    checkWeatherCron,
+    checkOperatorWeather,
   ],
 });

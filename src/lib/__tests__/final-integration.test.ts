@@ -85,6 +85,8 @@ vi.mock("@/lib/db/queries/operator-settings", () => ({
     communicationTemplates: null,
     autoApprovalEnabled: false,
     autoApprovalThreshold: 0.7,
+    weatherMinCeiling: 1000,
+    weatherMinVisibility: 3,
     customWeights: [],
     createdAt: new Date("2026-01-01"),
     updatedAt: new Date("2026-01-01"),

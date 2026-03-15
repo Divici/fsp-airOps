@@ -34,6 +34,7 @@ export const operatorSettings = pgTable(
         next_lesson: true,
         waitlist: true,
         inactivity_outreach: true,
+        weather_disruption: false,
       }),
     communicationPreferences: jsonb()
       .notNull()
@@ -51,6 +52,8 @@ export const operatorSettings = pgTable(
       >(),
     communicationTemplates:
       jsonb().$type<Record<string, { subject: string; body: string }> | null>(),
+    weatherMinCeiling: integer().notNull().default(1000),
+    weatherMinVisibility: real().notNull().default(3),
     autoApprovalEnabled: boolean().notNull().default(false),
     autoApprovalThreshold: real().notNull().default(0.7),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),

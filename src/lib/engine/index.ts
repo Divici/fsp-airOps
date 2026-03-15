@@ -12,6 +12,7 @@ import { NextLessonWorkflowHandler } from "./workflows/next-lesson";
 import { DiscoveryFlightWorkflowHandler } from "./workflows/discovery-flight";
 import { WaitlistWorkflowHandler } from "./workflows/waitlist";
 import { InactivityOutreachWorkflowHandler } from "./workflows/inactivity-outreach";
+import { WeatherDisruptionWorkflowHandler } from "./workflows/weather-disruption";
 
 export function createOrchestrator(
   db: PostgresJsDatabase,
@@ -23,6 +24,7 @@ export function createOrchestrator(
   registry.register(new DiscoveryFlightWorkflowHandler(fspClient));
   registry.register(new WaitlistWorkflowHandler(fspClient));
   registry.register(new InactivityOutreachWorkflowHandler(fspClient));
+  registry.register(new WeatherDisruptionWorkflowHandler(fspClient));
   const auditService = new AuditService(db);
   return new Orchestrator(db, fspClient, registry, auditService);
 }

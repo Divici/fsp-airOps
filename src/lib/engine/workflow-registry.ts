@@ -43,6 +43,8 @@ export function triggerToWorkflow(
       return "waitlist";
     case "inactivity_detected":
       return "inactivity_outreach";
+    case "weather_detected":
+      return "weather_disruption";
     case "manual":
       return null;
     default: {

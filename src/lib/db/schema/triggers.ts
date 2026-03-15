@@ -24,6 +24,7 @@ export const schedulingTriggers = pgTable(
         | "lesson_complete"
         | "opening_detected"
         | "inactivity_detected"
+        | "weather_detected"
         | "manual"
       >(),
     status: text()

@@ -26,3 +26,7 @@ export {
   InactivityDetector,
   type InactiveStudent,
 } from "./inactivity-detector";
+export {
+  WeatherDisruptionDetector,
+  type AffectedFlight,
+} from "./weather-detector";

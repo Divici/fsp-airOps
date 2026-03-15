@@ -285,6 +285,7 @@ describe("Foundation Integration", () => {
         next_lesson: true,
         waitlist: true,
         inactivity_outreach: true,
+        weather_disruption: false,
       });
 
       expect(DEFAULT_OPERATOR_SETTINGS.communicationPreferences).toEqual({
