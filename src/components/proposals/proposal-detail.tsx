@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { NavLink } from "@/components/layout/nav-context";
 import { formatDistanceToNow, format } from "date-fns";
 import { ArrowLeft, Clock, MapPin, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -53,12 +53,12 @@ function ProposalNotFound() {
           This proposal may have been removed or the ID is incorrect.
         </p>
       </div>
-      <Link href="/proposals">
+      <NavLink href="/proposals">
         <Button variant="outline">
           <ArrowLeft className="size-4" data-icon="inline-start" />
           Back to proposals
         </Button>
-      </Link>
+      </NavLink>
     </div>
   );
 }
@@ -137,13 +137,13 @@ export function ProposalDetail({ proposalId }: ProposalDetailProps) {
   return (
     <div className="flex flex-col gap-6 p-4 lg:p-6" data-testid="proposal-detail">
       {/* Back link */}
-      <Link
+      <NavLink
         href="/proposals"
         className="inline-flex w-fit items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
       >
         <ArrowLeft className="size-4" />
         Back to proposals
-      </Link>
+      </NavLink>
 
       {/* Header */}
       <div className="flex flex-col gap-3">

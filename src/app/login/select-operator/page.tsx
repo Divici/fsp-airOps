@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plane, Building2, Loader2 } from "lucide-react";
+import Image from "next/image";
+import { Building2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -78,7 +79,7 @@ export default function SelectOperatorPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="mx-auto mb-2 flex size-10 items-center justify-center rounded-lg bg-primary/10">
-            <Plane className="size-5 text-primary" />
+            <Image src="/fsp-logo-icon.png" alt="FSP" width={24} height={24} />
           </div>
           <CardTitle className="text-lg">Select Organization</CardTitle>
           <CardDescription>

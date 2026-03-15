@@ -55,15 +55,17 @@ export async function middleware(request: NextRequest) {
       return NextResponse.next({ request: { headers } });
     }
 
-    // Mock mode fallback: inject default headers
-    if (isMock) {
+    // Mock mode fallback: inject default headers only if no session cookie was
+    // ever set (first visit). Once the user logs in and gets a cookie, mock
+    // mode still requires the cookie so that logout works properly.
+    if (isMock && !sessionCookie) {
       const headers = new Headers(request.headers);
       headers.set("x-operator-id", "1");
       headers.set("x-user-id", "dev-user-000");
       return NextResponse.next({ request: { headers } });
     }
 
-    // No session, not mock → 401
+    // No session → 401
     return NextResponse.json(
       { error: "Missing authentication" },
       { status: 401 }
@@ -76,12 +78,13 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Mock mode: allow all page access
-  if (isMock) {
+  // Mock mode: allow page access only if user has never logged in (no cookie
+  // was ever set). Once they've logged in/out, require the cookie.
+  if (isMock && !sessionCookie) {
     return NextResponse.next();
   }
 
-  // No session, not mock → redirect to login
+  // No session → redirect to login
   const loginUrl = new URL("/login", request.url);
   loginUrl.searchParams.set("from", pathname);
   return NextResponse.redirect(loginUrl);

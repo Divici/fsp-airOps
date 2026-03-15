@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { NavLink } from "@/components/layout/nav-context";
 import { formatDistanceToNow } from "date-fns";
 import {
   FileText,
@@ -103,12 +103,12 @@ export function RecentActivity() {
         )}
 
         <div className="mt-3 border-t pt-3">
-          <Link
-            href="/proposals"
+          <NavLink
+            href="/activity"
             className="text-xs font-medium text-primary hover:underline"
           >
             View all activity
-          </Link>
+          </NavLink>
         </div>
       </CardContent>
     </Card>

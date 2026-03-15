@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { NavLink } from "@/components/layout/nav-context";
 import { formatDistanceToNow, format } from "date-fns";
 import {
   ArrowLeft,
@@ -118,12 +118,12 @@ function ProspectNotFound() {
           This prospect request may have been removed or the ID is incorrect.
         </p>
       </div>
-      <Link href="/discovery">
+      <NavLink href="/discovery">
         <Button variant="outline">
           <ArrowLeft className="size-4" data-icon="inline-start" />
           Back to discovery flights
         </Button>
-      </Link>
+      </NavLink>
     </div>
   );
 }
@@ -161,13 +161,13 @@ export function ProspectDetail({ prospectId }: ProspectDetailProps) {
       data-testid="prospect-detail"
     >
       {/* Back link */}
-      <Link
+      <NavLink
         href="/discovery"
         className="inline-flex w-fit items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
       >
         <ArrowLeft className="size-4" />
         Back to discovery flights
-      </Link>
+      </NavLink>
 
       {/* Header */}
       <div className="flex flex-col gap-3">
@@ -235,13 +235,13 @@ export function ProspectDetail({ prospectId }: ProspectDetailProps) {
           <Separator />
           <section>
             <h2 className="mb-3 text-sm font-semibold">Linked Proposal</h2>
-            <Link
+            <NavLink
               href={`/proposals/${prospect.linkedProposalId}`}
               className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
             >
               <LinkIcon className="size-3.5" />
               View proposal {prospect.linkedProposalId}
-            </Link>
+            </NavLink>
           </section>
         </>
       )}

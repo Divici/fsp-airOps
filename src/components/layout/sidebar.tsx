@@ -1,8 +1,9 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useNav } from "@/components/layout/nav-context";
+import Image from "next/image";
 import {
   LayoutDashboard,
   FileText,
@@ -26,6 +27,7 @@ const navItems = [
 export function Sidebar({ className }: { className?: string }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { navigate } = useNav();
   const [loggingOut, setLoggingOut] = useState(false);
 
   const handleLogout = useCallback(async () => {
@@ -47,8 +49,8 @@ export function Sidebar({ className }: { className?: string }) {
       )}
     >
       {/* Branding */}
-      <div className="flex h-14 items-center gap-2.5 px-4">
-        <Plane className="size-5 text-primary" />
+      <div className="flex h-14 items-start gap-2.5 px-4 pt-3">
+        <Image src="/fsp-logo-icon.png" alt="FSP" width={60} height={60} className="shrink-0 mt-0.5" />
         <div className="flex flex-col">
           <span className="text-sm font-semibold leading-tight tracking-tight text-foreground">
             AirOps
@@ -71,11 +73,11 @@ export function Sidebar({ className }: { className?: string }) {
           const Icon = item.icon;
 
           return (
-            <Link
+            <button
               key={item.href}
-              href={item.href}
+              onClick={() => navigate(item.href)}
               className={cn(
-                "flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors",
+                "flex w-full cursor-pointer items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors text-left",
                 isActive
                   ? "bg-sidebar-accent text-sidebar-accent-foreground"
                   : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
@@ -83,7 +85,7 @@ export function Sidebar({ className }: { className?: string }) {
             >
               <Icon className="size-4 shrink-0" />
               {item.label}
-            </Link>
+            </button>
           );
         })}
       </nav>

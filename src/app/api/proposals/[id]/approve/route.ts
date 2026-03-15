@@ -107,12 +107,32 @@ export async function POST(
         }
       }
 
+      // Resolve student contact info for notifications
+      let studentEmail: string | undefined;
+      let studentName: string | undefined;
+      try {
+        const fsp = createFspClient();
+        const users = await fsp.getUsers(tenant.operatorId);
+        const studentId = proposal.affectedStudentIds?.[0];
+        if (studentId) {
+          const student = users.find((u) => u.id === studentId);
+          if (student) {
+            studentEmail = student.email;
+            studentName = student.fullName || `${student.firstName} ${student.lastName}`;
+          }
+        }
+      } catch {
+        // Non-critical — proceed without contact info
+      }
+
       // Fire-and-forget notification — don't block the response
       sendApprovalNotification({
         db,
         operatorId: tenant.operatorId,
         proposal,
         executionSuccess: executionResult.success,
+        studentEmail,
+        studentName,
       }).catch(() => {
         // Swallowed intentionally — notification failure is non-critical
       });

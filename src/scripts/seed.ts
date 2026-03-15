@@ -41,31 +41,31 @@ const OPERATOR_ID = 1;
 
 // Fixed UUIDs for predictability
 const TRIGGER_IDS = {
-  t1: "00000000-0000-0000-0000-000000000t01",
-  t2: "00000000-0000-0000-0000-000000000t02",
-  t3: "00000000-0000-0000-0000-000000000t03",
-  t4: "00000000-0000-0000-0000-000000000t04",
-  t5: "00000000-0000-0000-0000-000000000t05",
+  t1: "00000000-0000-0000-0000-000000000e01",
+  t2: "00000000-0000-0000-0000-000000000e02",
+  t3: "00000000-0000-0000-0000-000000000e03",
+  t4: "00000000-0000-0000-0000-000000000e04",
+  t5: "00000000-0000-0000-0000-000000000e05",
 } as const;
 
 const PROPOSAL_IDS = {
-  p1: "00000000-0000-0000-0000-000000000p01",
-  p2: "00000000-0000-0000-0000-000000000p02",
-  p3: "00000000-0000-0000-0000-000000000p03",
-  p4: "00000000-0000-0000-0000-000000000p04",
-  p5: "00000000-0000-0000-0000-000000000p05",
+  p1: "00000000-0000-0000-0000-0000000000b1",
+  p2: "00000000-0000-0000-0000-0000000000b2",
+  p3: "00000000-0000-0000-0000-0000000000b3",
+  p4: "00000000-0000-0000-0000-0000000000b4",
+  p5: "00000000-0000-0000-0000-0000000000b5",
 } as const;
 
 const PROSPECT_IDS = {
-  pr1: "00000000-0000-0000-0000-00000000pr01",
-  pr2: "00000000-0000-0000-0000-00000000pr02",
-  pr3: "00000000-0000-0000-0000-00000000pr03",
+  pr1: "00000000-0000-0000-0000-0000000000c1",
+  pr2: "00000000-0000-0000-0000-0000000000c2",
+  pr3: "00000000-0000-0000-0000-0000000000c3",
 } as const;
 
 const APPROVAL_IDS = {
-  a1: "00000000-0000-0000-0000-000000000a01",
-  a2: "00000000-0000-0000-0000-000000000a02",
-  a3: "00000000-0000-0000-0000-000000000a03",
+  a1: "00000000-0000-0000-0000-0000000000a1",
+  a2: "00000000-0000-0000-0000-0000000000a2",
+  a3: "00000000-0000-0000-0000-0000000000a3",
 } as const;
 
 // Mock entity IDs
@@ -94,6 +94,19 @@ function daysFromNow(days: number, hour = 9): Date {
 
 function hoursAfter(base: Date, hours: number): Date {
   return new Date(base.getTime() + hours * 60 * 60 * 1000);
+}
+
+const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+function dayName(date: Date): string {
+  return DAY_NAMES[date.getDay()];
+}
+
+function timeLabel(date: Date): string {
+  const h = date.getHours();
+  if (h < 12) return "morning";
+  if (h < 17) return "afternoon";
+  return "evening";
 }
 
 // ---------------------------------------------------------------------------
@@ -201,6 +214,14 @@ async function seed() {
 
   // 4. Proposals
   console.log("  Inserting proposals...");
+
+  // Pre-compute dates so text descriptions match actual dates
+  const p1RescheduleDate = daysFromNow(3, 9); // action 2 for proposal 1
+  const p2DiscoveryDate = daysFromNow(4, 10);
+  const p3LessonDate = daysFromNow(1, 14);
+  const p4RescheduleDate = daysFromNow(3, 9);
+  const p5SwapDate = daysFromNow(1, 9);
+
   await db.insert(proposals).values([
     {
       id: PROPOSAL_IDS.p1,
@@ -210,9 +231,9 @@ async function seed() {
       status: "pending",
       priority: 80,
       summary:
-        "Reschedule Alex's Stage 3 checkride prep to Thursday morning with the same instructor",
+        `Reschedule Alex's Stage 3 checkride prep to ${dayName(p1RescheduleDate)} morning with the same instructor`,
       rationale:
-        "Alex has not flown in 6 days and the checkride is next week. Thursday 9 AM slot with Instructor Mike is open and keeps continuity.",
+        `Alex has not flown in 6 days and the checkride is next week. ${dayName(p1RescheduleDate)} 9 AM slot with Instructor Mike is open and keeps continuity.`,
       affectedStudentIds: [STUDENTS.s1],
       affectedReservationIds: ["res-100"],
       affectedResourceIds: [INSTRUCTORS.i1, AIRCRAFT.a1],
@@ -226,9 +247,9 @@ async function seed() {
       status: "pending",
       priority: 60,
       summary:
-        "Schedule a discovery flight for prospect Jane Doe on Saturday at 10 AM",
+        `Schedule a discovery flight for prospect Jane Doe on ${dayName(p2DiscoveryDate)} at 10 AM`,
       rationale:
-        "Jane submitted a discovery flight request. Saturday 10 AM has instructor and C172 availability. Booking within 48 hours of inquiry improves conversion rates.",
+        `Jane submitted a discovery flight request. ${dayName(p2DiscoveryDate)} 10 AM has instructor and C172 availability. Booking within 48 hours of inquiry improves conversion rates.`,
       affectedStudentIds: [STUDENTS.s2],
       affectedResourceIds: [INSTRUCTORS.i2, AIRCRAFT.a2],
       expiresAt: daysFromNow(3),
@@ -241,9 +262,9 @@ async function seed() {
       status: "executed",
       priority: 40,
       summary:
-        "Book Carlos's next lesson (Stage 2 Lesson 5) for Wednesday afternoon",
+        `Book Carlos's next lesson (Stage 2 Lesson 5) for ${dayName(p3LessonDate)} ${timeLabel(p3LessonDate)}`,
       rationale:
-        "Carlos just completed Stage 2 Lesson 4. The syllabus calls for Lesson 5 within 5 days. Wednesday 2 PM with his regular instructor is available.",
+        `Carlos just completed Stage 2 Lesson 4. The syllabus calls for Lesson 5 within 5 days. ${dayName(p3LessonDate)} 2 PM with his regular instructor is available.`,
       affectedStudentIds: [STUDENTS.s3],
       affectedReservationIds: ["res-200"],
       affectedResourceIds: [INSTRUCTORS.i1, AIRCRAFT.a1],
@@ -258,7 +279,7 @@ async function seed() {
       summary:
         "Reschedule Brian's cross-country flight with alternate instructor",
       rationale:
-        "Brian's instructor called in sick. Instructor Sarah is available Friday at the same time. However, Brian has never flown with Sarah.",
+        `Brian's instructor called in sick. Instructor Sarah is available ${dayName(p4RescheduleDate)} at the same time. However, Brian has never flown with Sarah.`,
       affectedStudentIds: [STUDENTS.s2],
       affectedReservationIds: ["res-300"],
       affectedResourceIds: [INSTRUCTORS.i2, AIRCRAFT.a1],
@@ -279,23 +300,25 @@ async function seed() {
       affectedResourceIds: [INSTRUCTORS.i1, AIRCRAFT.a2],
       validationSnapshot: {
         autoApproved: true,
-        confidenceScore: 0.92,
-        riskLevel: "low",
         decision: {
-          decidedBy: "system:auto-approver",
-          reason: "Same-model aircraft swap with identical time and instructor",
+          decision: "approve",
+          confidence: 0.92,
+          reasoning: "Same-model aircraft swap with identical time and instructor. N67890 is the same make/model as N12345, same instructor and time slot — minimal disruption to the student's training.",
+          riskFactors: ["Student has not flown N67890 before"],
+          mitigations: ["Same aircraft model (C172S)", "Same instructor maintains continuity"],
+          method: "rule-based",
         },
+        toolCalls: [],
+        threshold: 0.7,
+        evaluatedAt: new Date().toISOString(),
       },
     },
   ]);
 
   // 5. Proposal actions
   console.log("  Inserting proposal actions...");
-  const start1 = daysFromNow(2, 9);
-  const start2 = daysFromNow(4, 10);
-  const start3 = daysFromNow(1, 14);
-  const start4 = daysFromNow(3, 9);
-  const start5 = daysFromNow(1, 9);
+  const start1 = daysFromNow(2, 9); // original reservation to cancel
+  // p1RescheduleDate, p2DiscoveryDate, p3LessonDate, p4RescheduleDate, p5SwapDate already defined above
 
   await db.insert(proposalActions).values([
     // Proposal 1 actions (2 actions)
@@ -320,15 +343,15 @@ async function seed() {
       operatorId: OPERATOR_ID,
       rank: 2,
       actionType: "create_reservation",
-      startTime: daysFromNow(3, 9),
-      endTime: hoursAfter(daysFromNow(3, 9), 2),
+      startTime: p1RescheduleDate,
+      endTime: hoursAfter(p1RescheduleDate, 2),
       locationId: LOCATION_ID,
       studentId: STUDENTS.s1,
       instructorId: INSTRUCTORS.i1,
       aircraftId: AIRCRAFT.a1,
       activityTypeId: ACTIVITY_TYPE_ID,
       explanation:
-        "Create new reservation on Thursday morning with the same instructor and aircraft",
+        `Create new reservation on ${dayName(p1RescheduleDate)} morning with the same instructor and aircraft`,
       validationStatus: "valid",
       executionStatus: "pending",
     },
@@ -338,15 +361,15 @@ async function seed() {
       operatorId: OPERATOR_ID,
       rank: 1,
       actionType: "create_reservation",
-      startTime: start2,
-      endTime: hoursAfter(start2, 1.5),
+      startTime: p2DiscoveryDate,
+      endTime: hoursAfter(p2DiscoveryDate, 1.5),
       locationId: LOCATION_ID,
       studentId: STUDENTS.s2,
       instructorId: INSTRUCTORS.i2,
       aircraftId: AIRCRAFT.a2,
       activityTypeId: ACTIVITY_TYPE_ID,
       explanation:
-        "Book discovery flight for prospect Jane Doe, Saturday 10 AM",
+        `Book discovery flight for prospect Jane Doe, ${dayName(p2DiscoveryDate)} 10 AM`,
       validationStatus: "valid",
       executionStatus: "pending",
     },
@@ -356,14 +379,14 @@ async function seed() {
       operatorId: OPERATOR_ID,
       rank: 1,
       actionType: "create_reservation",
-      startTime: start3,
-      endTime: hoursAfter(start3, 2),
+      startTime: p3LessonDate,
+      endTime: hoursAfter(p3LessonDate, 2),
       locationId: LOCATION_ID,
       studentId: STUDENTS.s3,
       instructorId: INSTRUCTORS.i1,
       aircraftId: AIRCRAFT.a1,
       activityTypeId: ACTIVITY_TYPE_ID,
-      explanation: "Book Stage 2 Lesson 5 for Carlos, Wednesday 2 PM",
+      explanation: `Book Stage 2 Lesson 5 for Carlos, ${dayName(p3LessonDate)} 2 PM`,
       validationStatus: "valid",
       executionStatus: "created",
       fspReservationId: "fsp-res-55001",
@@ -374,8 +397,8 @@ async function seed() {
       operatorId: OPERATOR_ID,
       rank: 1,
       actionType: "cancel",
-      startTime: start4,
-      endTime: hoursAfter(start4, 3),
+      startTime: p4RescheduleDate,
+      endTime: hoursAfter(p4RescheduleDate, 3),
       locationId: LOCATION_ID,
       studentId: STUDENTS.s2,
       instructorId: INSTRUCTORS.i1,
@@ -390,15 +413,15 @@ async function seed() {
       operatorId: OPERATOR_ID,
       rank: 2,
       actionType: "create_reservation",
-      startTime: start4,
-      endTime: hoursAfter(start4, 3),
+      startTime: p4RescheduleDate,
+      endTime: hoursAfter(p4RescheduleDate, 3),
       locationId: LOCATION_ID,
       studentId: STUDENTS.s2,
       instructorId: INSTRUCTORS.i2,
       aircraftId: AIRCRAFT.a1,
       activityTypeId: ACTIVITY_TYPE_ID,
       explanation:
-        "Rebook with alternate instructor Sarah at the same time/aircraft",
+        `Rebook with alternate instructor Sarah on ${dayName(p4RescheduleDate)} at the same time/aircraft`,
       validationStatus: "valid",
       executionStatus: "pending",
     },
@@ -408,8 +431,8 @@ async function seed() {
       operatorId: OPERATOR_ID,
       rank: 1,
       actionType: "cancel",
-      startTime: start5,
-      endTime: hoursAfter(start5, 1.5),
+      startTime: p5SwapDate,
+      endTime: hoursAfter(p5SwapDate, 1.5),
       locationId: LOCATION_ID,
       studentId: STUDENTS.s1,
       instructorId: INSTRUCTORS.i1,
@@ -425,8 +448,8 @@ async function seed() {
       operatorId: OPERATOR_ID,
       rank: 2,
       actionType: "create_reservation",
-      startTime: start5,
-      endTime: hoursAfter(start5, 1.5),
+      startTime: p5SwapDate,
+      endTime: hoursAfter(p5SwapDate, 1.5),
       locationId: LOCATION_ID,
       studentId: STUDENTS.s1,
       instructorId: INSTRUCTORS.i1,

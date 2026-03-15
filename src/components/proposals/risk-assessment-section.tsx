@@ -135,7 +135,7 @@ export function RiskAssessmentSection({ data }: RiskAssessmentSectionProps) {
       </div>
 
       {/* Risk factors */}
-      {decision.riskFactors.length > 0 && (
+      {decision.riskFactors && decision.riskFactors.length > 0 && (
         <div>
           <p className="mb-1 text-xs font-medium text-muted-foreground">
             Risk Factors
@@ -149,7 +149,7 @@ export function RiskAssessmentSection({ data }: RiskAssessmentSectionProps) {
       )}
 
       {/* Mitigations */}
-      {decision.mitigations.length > 0 && (
+      {decision.mitigations && decision.mitigations.length > 0 && (
         <div>
           <p className="mb-1 text-xs font-medium text-muted-foreground">
             Mitigations
@@ -163,7 +163,7 @@ export function RiskAssessmentSection({ data }: RiskAssessmentSectionProps) {
       )}
 
       {/* Tool calls (collapsible) */}
-      {data.toolCalls.length > 0 && (
+      {data.toolCalls && data.toolCalls.length > 0 && (
         <div>
           <button
             type="button"

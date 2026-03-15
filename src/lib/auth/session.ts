@@ -4,9 +4,7 @@
 
 import { SignJWT, jwtVerify, type JWTPayload } from "jose";
 import { cookies } from "next/headers";
-import { getEnv } from "@/config/env";
 import type { UserSession } from "./types";
-import { DEV_DEFAULT_OPERATOR_ID } from "./tenant-context";
 
 /** Cookie name used for the session token. */
 export const SESSION_COOKIE_NAME = "fsp-session";
@@ -95,10 +93,8 @@ export async function createSession(data: CreateSessionData): Promise<UserSessio
  * Retrieve the current user session from the cookie.
  * Returns null if no cookie, expired, or invalid signature.
  *
- * In mock mode returns a dev session when no cookie is present.
  */
 export async function getCurrentSession(): Promise<UserSession | null> {
-  const env = getEnv();
 
   try {
     const cookieStore = await cookies();
@@ -110,18 +106,6 @@ export async function getCurrentSession(): Promise<UserSession | null> {
     }
   } catch {
     // cookies() may throw in middleware or edge contexts — fall through
-  }
-
-  // Mock mode fallback
-  if (env.FSP_ENVIRONMENT === "mock") {
-    return {
-      userId: "dev-user-000",
-      email: "dev@example.com",
-      operatorId: DEV_DEFAULT_OPERATOR_ID,
-      operators: [DEV_DEFAULT_OPERATOR_ID],
-      token: "mock-token",
-      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
-    };
   }
 
   return null;

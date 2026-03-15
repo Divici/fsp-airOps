@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { NavLink } from "@/components/layout/nav-context";
 import {
   Clock,
   CheckCircle,
@@ -40,7 +40,7 @@ function MetricCard({ icon, label, value, colorClass, href }: MetricCardProps) {
   );
 
   if (href) {
-    return <Link href={href} className="block">{content}</Link>;
+    return <NavLink href={href} className="block">{content}</NavLink>;
   }
   return content;
 }

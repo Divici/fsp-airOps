@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { NavLink } from "@/components/layout/nav-context";
 import { formatDistanceToNow, format } from "date-fns";
 import { Mail, Phone, Calendar, Clock, ChevronRight } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -17,7 +17,7 @@ export function ProspectCard({ prospect }: { prospect: ProspectView }) {
     : null;
 
   return (
-    <Link href={`/discovery/${prospect.id}`} className="group block">
+    <NavLink href={`/discovery/${prospect.id}`} className="group block">
       <Card
         size="sm"
         className="transition-shadow hover:ring-2 hover:ring-primary/20 hover:shadow-md"
@@ -64,6 +64,6 @@ export function ProspectCard({ prospect }: { prospect: ProspectView }) {
           </div>
         </div>
       </Card>
-    </Link>
+    </NavLink>
   );
 }
