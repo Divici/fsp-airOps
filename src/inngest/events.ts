@@ -24,4 +24,9 @@ export type Events = {
       triggerId: string;
     };
   };
+  "scheduler/inactivity.evaluate": {
+    data: {
+      operatorId: number;
+    };
+  };
 };

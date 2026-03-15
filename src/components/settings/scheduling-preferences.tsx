@@ -44,6 +44,11 @@ const workflowOptions: {
     label: "Waitlist",
     description: "Fill openings from the waitlist when cancellations occur",
   },
+  {
+    key: "inactivity_outreach",
+    label: "Inactivity Outreach",
+    description: "Reach out to students who haven't flown recently with scheduling suggestions",
+  },
 ];
 
 export function SchedulingPreferences({
@@ -124,6 +129,34 @@ export function SchedulingPreferences({
               Only suggest flights during daylight hours.
             </p>
           </div>
+        </div>
+
+        {/* Inactivity threshold */}
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="inactivity-threshold">
+            Inactivity threshold (days)
+          </Label>
+          <p className="text-xs text-muted-foreground">
+            Students with no flights in this many days will be flagged for
+            outreach (3-30 days).
+          </p>
+          <Input
+            id="inactivity-threshold"
+            type="number"
+            min={3}
+            max={30}
+            value={settings.inactivityThresholdDays}
+            onChange={(e) =>
+              onUpdate({
+                inactivityThresholdDays: Math.min(
+                  30,
+                  Math.max(3, parseInt(e.target.value) || 7)
+                ),
+              })
+            }
+            disabled={disabled}
+            className="w-24"
+          />
         </div>
 
         {/* Enabled workflows */}

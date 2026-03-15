@@ -15,11 +15,13 @@ export interface OperatorSettings {
   searchWindowDays: number;
   topNAlternatives: number;
   daylightOnly: boolean;
+  inactivityThresholdDays: number;
   enabledWorkflows: {
     reschedule: boolean;
     discovery_flight: boolean;
     next_lesson: boolean;
     waitlist: boolean;
+    inactivity_outreach: boolean;
   };
   communicationPreferences: {
     email: boolean;

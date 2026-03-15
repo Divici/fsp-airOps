@@ -9,11 +9,13 @@ export const DEFAULT_OPERATOR_SETTINGS = {
   searchWindowDays: 7,
   topNAlternatives: 5,
   daylightOnly: true,
+  inactivityThresholdDays: 7,
   enabledWorkflows: {
     reschedule: true,
     discovery_flight: true,
     next_lesson: true,
     waitlist: true,
+    inactivity_outreach: true,
   },
   communicationPreferences: {
     email: true,

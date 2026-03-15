@@ -29,6 +29,7 @@ function toSettingsResponse(s: OperatorSettings) {
     searchWindowDays: s.searchWindowDays,
     topNAlternatives: s.topNAlternatives,
     daylightOnly: s.daylightOnly,
+    inactivityThresholdDays: s.inactivityThresholdDays,
     enabledWorkflows: s.enabledWorkflows,
     communicationPreferences: s.communicationPreferences,
     customWeights: s.customWeights,

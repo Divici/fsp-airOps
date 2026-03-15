@@ -34,6 +34,7 @@ const mockSettings: OperatorSettings = {
   searchWindowDays: 7,
   topNAlternatives: 3,
   daylightOnly: true,
+    inactivityThresholdDays: 7,
   enabledWorkflows: {
     reschedule: true,
     discovery_flight: true,

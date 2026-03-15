@@ -59,12 +59,14 @@ export const updateOperatorSettingsSchema = z.object({
   searchWindowDays: z.number().int().min(1).max(30).optional(),
   topNAlternatives: z.number().int().min(1).max(20).optional(),
   daylightOnly: z.boolean().optional(),
+  inactivityThresholdDays: z.number().int().min(3).max(30).optional(),
   enabledWorkflows: z
     .object({
       reschedule: z.boolean().optional(),
       discovery_flight: z.boolean().optional(),
       next_lesson: z.boolean().optional(),
       waitlist: z.boolean().optional(),
+      inactivity_outreach: z.boolean().optional(),
     })
     .optional(),
   communicationPreferences: z
@@ -121,7 +123,7 @@ export const proposalListQuerySchema = z.object({
     ])
     .optional(),
   workflowType: z
-    .enum(["reschedule", "discovery_flight", "next_lesson", "waitlist"])
+    .enum(["reschedule", "discovery_flight", "next_lesson", "waitlist", "inactivity_outreach"])
     .optional(),
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),

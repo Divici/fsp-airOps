@@ -15,6 +15,7 @@ export type TriggerType =
   | "discovery_request"
   | "lesson_complete"
   | "opening_detected"
+  | "inactivity_detected"
   | "manual";
 
 export type TriggerStatus =

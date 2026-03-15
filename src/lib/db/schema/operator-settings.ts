@@ -25,6 +25,7 @@ export const operatorSettings = pgTable(
     searchWindowDays: integer().notNull().default(7),
     topNAlternatives: integer().notNull().default(5),
     daylightOnly: boolean().notNull().default(true),
+    inactivityThresholdDays: integer().notNull().default(7),
     enabledWorkflows: jsonb()
       .notNull()
       .default({
@@ -32,6 +33,7 @@ export const operatorSettings = pgTable(
         discovery_flight: true,
         next_lesson: true,
         waitlist: true,
+        inactivity_outreach: true,
       }),
     communicationPreferences: jsonb()
       .notNull()

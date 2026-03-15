@@ -28,7 +28,12 @@ describe("DEFAULT_OPERATOR_SETTINGS", () => {
       discovery_flight: true,
       next_lesson: true,
       waitlist: true,
+      inactivity_outreach: true,
     });
+  });
+
+  it("defines inactivity threshold default", () => {
+    expect(DEFAULT_OPERATOR_SETTINGS.inactivityThresholdDays).toBe(7);
   });
 
   it("enables email but not SMS by default", () => {

@@ -41,6 +41,8 @@ export function triggerToWorkflow(
       return "next_lesson";
     case "opening_detected":
       return "waitlist";
+    case "inactivity_detected":
+      return "inactivity_outreach";
     case "manual":
       return null;
     default: {

@@ -74,6 +74,7 @@ vi.mock("@/lib/db/queries/operator-settings", () => ({
     searchWindowDays: 7,
     topNAlternatives: 5,
     daylightOnly: true,
+    inactivityThresholdDays: 7,
     enabledWorkflows: {
       reschedule: true,
       discovery_flight: true,
@@ -475,6 +476,7 @@ describe("Next Lesson End-to-End Integration", () => {
           searchWindowDays: 7,
           topNAlternatives: 5,
           daylightOnly: true,
+    inactivityThresholdDays: 7,
           enabledWorkflows: {
             reschedule: true,
             discovery_flight: true,
@@ -562,6 +564,7 @@ describe("Next Lesson End-to-End Integration", () => {
           searchWindowDays: 7,
           topNAlternatives: 5,
           daylightOnly: true,
+    inactivityThresholdDays: 7,
           enabledWorkflows: {
             reschedule: true,
             discovery_flight: true,
@@ -602,6 +605,7 @@ describe("Next Lesson End-to-End Integration", () => {
           searchWindowDays: 7,
           topNAlternatives: 3,
           daylightOnly: true,
+    inactivityThresholdDays: 7,
           enabledWorkflows: {
             reschedule: true,
             discovery_flight: true,
@@ -1054,6 +1058,7 @@ describe("Next Lesson End-to-End Integration", () => {
           searchWindowDays: 7,
           topNAlternatives: 5,
           daylightOnly: true,
+    inactivityThresholdDays: 7,
           enabledWorkflows: {
             reschedule: true,
             discovery_flight: true,
