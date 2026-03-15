@@ -10,5 +10,11 @@ export {
   TenantResolutionError,
   DEV_DEFAULT_OPERATOR_ID,
 } from "./tenant-context";
-export { getCurrentSession, createSession } from "./session";
-export type { FspAuthResponse } from "./session";
+export {
+  getCurrentSession,
+  createSession,
+  destroySession,
+  verifySessionToken,
+  SESSION_COOKIE_NAME,
+} from "./session";
+export type { FspAuthResponse, CreateSessionData } from "./session";

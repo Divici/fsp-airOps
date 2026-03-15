@@ -1,14 +1,19 @@
 // ---------------------------------------------------------------------------
-// Next.js Middleware — lightweight auth / tenant gate.
+// Next.js Middleware — auth / tenant gate with real session validation.
 // ---------------------------------------------------------------------------
 
 import { NextResponse, type NextRequest } from "next/server";
+import { verifySessionToken } from "@/lib/auth/session";
+
+const SESSION_COOKIE_NAME = "fsp-session";
 
 /** Routes that do not require authentication. */
 const PUBLIC_PATTERNS = [
   /^\/api\/public(\/|$)/,
   /^\/api\/inngest(\/|$)/,
   /^\/api\/health$/,
+  /^\/api\/auth(\/|$)/,
+  /^\/login(\/|$)/,
   /^\/_next(\/|$)/,
   /^\/favicon\.ico$/,
 ];
@@ -17,7 +22,7 @@ function isPublicRoute(pathname: string): boolean {
   return PUBLIC_PATTERNS.some((p) => p.test(pathname));
 }
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Let public routes through unconditionally
@@ -27,41 +32,59 @@ export function middleware(request: NextRequest) {
 
   const isMock = process.env.FSP_ENVIRONMENT === "mock" || !process.env.FSP_ENVIRONMENT;
 
-  // --- API routes: require x-operator-id header (unless mock mode) ---------
+  // Try to resolve session from the cookie
+  const sessionCookie = request.cookies.get(SESSION_COOKIE_NAME);
+  const session = sessionCookie?.value
+    ? await verifySessionToken(sessionCookie.value)
+    : null;
+
+  // --- API routes -----------------------------------------------------------
   if (pathname.startsWith("/api/")) {
     const operatorIdHeader = request.headers.get("x-operator-id");
 
-    if (!operatorIdHeader && !isMock) {
-      return NextResponse.json(
-        { error: "Missing x-operator-id header" },
-        { status: 401 }
-      );
+    // If there's already an explicit header, let it through
+    if (operatorIdHeader) {
+      return NextResponse.next();
     }
 
-    // In mock mode, inject default headers when not provided
-    if (isMock && !operatorIdHeader) {
+    // If we have a valid session, inject headers from it
+    if (session) {
+      const headers = new Headers(request.headers);
+      headers.set("x-operator-id", String(session.operatorId));
+      headers.set("x-user-id", session.userId);
+      return NextResponse.next({ request: { headers } });
+    }
+
+    // Mock mode fallback: inject default headers
+    if (isMock) {
       const headers = new Headers(request.headers);
       headers.set("x-operator-id", "1");
       headers.set("x-user-id", "dev-user-000");
       return NextResponse.next({ request: { headers } });
     }
 
+    // No session, not mock → 401
+    return NextResponse.json(
+      { error: "Missing authentication" },
+      { status: 401 }
+    );
+  }
+
+  // --- Dashboard / page routes ----------------------------------------------
+  // If there's a valid session, allow through
+  if (session) {
     return NextResponse.next();
   }
 
-  // --- Dashboard routes: check for session cookie (placeholder) ------------
-  if (pathname.startsWith("/dashboard") || pathname.startsWith("/(dashboard)")) {
-    // In mock mode, allow all dashboard access
-    if (isMock) {
-      return NextResponse.next();
-    }
-
-    // TODO: validate session cookie here once real auth is implemented
-    // For now, allow through (server components will enforce via getTenantFromSession)
+  // Mock mode: allow all page access
+  if (isMock) {
     return NextResponse.next();
   }
 
-  return NextResponse.next();
+  // No session, not mock → redirect to login
+  const loginUrl = new URL("/login", request.url);
+  loginUrl.searchParams.set("from", pathname);
+  return NextResponse.redirect(loginUrl);
 }
 
 export const config = {

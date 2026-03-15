@@ -1,16 +1,19 @@
 "use client";
 
+import { useCallback, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   FileText,
   Plane,
   Settings,
   Activity,
+  LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
 
 const navItems = [
   { label: "Dashboard", href: "/", icon: LayoutDashboard },
@@ -22,6 +25,19 @@ const navItems = [
 
 export function Sidebar({ className }: { className?: string }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  const handleLogout = useCallback(async () => {
+    setLoggingOut(true);
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+      router.push("/login");
+      router.refresh();
+    } catch {
+      setLoggingOut(false);
+    }
+  }, [router]);
 
   return (
     <aside
@@ -74,7 +90,7 @@ export function Sidebar({ className }: { className?: string }) {
 
       <Separator />
 
-      {/* Bottom section — operator / user placeholder */}
+      {/* Bottom section — operator info & logout */}
       <div className="flex items-center gap-2.5 px-4 py-3">
         <div className="flex size-7 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground">
           OP
@@ -85,6 +101,16 @@ export function Sidebar({ className }: { className?: string }) {
             scheduler@example.com
           </p>
         </div>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          onClick={handleLogout}
+          disabled={loggingOut}
+          aria-label="Sign out"
+          title="Sign out"
+        >
+          <LogOut className="size-3.5" />
+        </Button>
       </div>
     </aside>
   );
