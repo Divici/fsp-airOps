@@ -1,8 +1,6 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 // ---------------------------------------------------------------------------
-// Real FSP Client (Stub)
-// Placeholder for actual FSP API HTTP calls. Each method documents the
-// endpoint it will call once FSP dev credentials are available.
+// Real FSP Client
+// Implements all IFspClient methods with actual HTTP calls to the FSP API.
 // ---------------------------------------------------------------------------
 
 import type {
@@ -35,166 +33,353 @@ import type {
   ReservationListParams,
 } from "./types";
 
-function notImplemented(method: string): never {
-  throw new Error(
-    `RealFspClient.${method} is not implemented. Awaiting FSP dev credentials.`,
-  );
-}
-
 export class RealFspClient implements IFspClient {
-  private baseUrl: string;
-  private coreBaseUrl: string;
-  private curriculumBaseUrl: string;
-  private subscriptionKey: string;
+  private env: Env;
   private token: string | null = null;
 
   constructor(env: Env) {
-    this.baseUrl = env.FSP_API_BASE_URL!;
-    this.coreBaseUrl = env.FSP_CORE_BASE_URL!;
-    this.curriculumBaseUrl = env.FSP_CURRICULUM_BASE_URL!;
-    this.subscriptionKey = env.FSP_SUBSCRIPTION_KEY!;
+    this.env = env;
   }
 
-  // -- Auth -- POST /api/auth/login
+  // ---------------------------------------------------------------------------
+  // Shared fetch helper
+  // ---------------------------------------------------------------------------
+
+  private async fspFetch<T>(
+    baseUrl: string,
+    path: string,
+    init?: RequestInit,
+  ): Promise<T> {
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      "x-subscription-key": this.env.FSP_SUBSCRIPTION_KEY!,
+      ...(this.token ? { Authorization: `Bearer ${this.token}` } : {}),
+      ...((init?.headers as Record<string, string>) ?? {}),
+    };
+
+    const res = await fetch(`${baseUrl}${path}`, {
+      ...init,
+      headers,
+    });
+
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      throw new Error(`FSP API error ${res.status}: ${path} - ${body}`);
+    }
+
+    return res.json() as Promise<T>;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Auth
+  // ---------------------------------------------------------------------------
+
   async authenticate(
-    _email: string,
-    _password: string,
+    email: string,
+    password: string,
   ): Promise<FspAuthResponse> {
-    notImplemented("authenticate");
+    const response = await this.fspFetch<FspAuthResponse>(
+      this.env.FSP_API_BASE_URL!,
+      "/common/v1.0/sessions/credentials",
+      {
+        method: "POST",
+        body: JSON.stringify({ email, password }),
+      },
+    );
+    this.token = response.token;
+    return response;
   }
 
-  // -- Auth -- POST /api/auth/refresh
   async refreshSession(): Promise<FspAuthResponse> {
-    notImplemented("refreshSession");
+    const response = await this.fspFetch<FspAuthResponse>(
+      this.env.FSP_API_BASE_URL!,
+      "/common/v1.0/sessions/refresh",
+      { method: "POST" },
+    );
+    this.token = response.token;
+    return response;
   }
 
-  // -- GET /api/operators/{id}/locations
-  async getLocations(_operatorId: number): Promise<FspLocation[]> {
-    notImplemented("getLocations");
+  // ---------------------------------------------------------------------------
+  // Resources
+  // ---------------------------------------------------------------------------
+
+  async getLocations(operatorId: number): Promise<FspLocation[]> {
+    return this.fspFetch<FspLocation[]>(
+      this.env.FSP_CORE_BASE_URL!,
+      `/common/v1.0/operators/${operatorId}/locations`,
+    );
   }
 
-  // -- GET /api/operators/{id}/aircraft
-  async getAircraft(_operatorId: number): Promise<FspAircraft[]> {
-    notImplemented("getAircraft");
+  async getAircraft(operatorId: number): Promise<FspAircraft[]> {
+    return this.fspFetch<FspAircraft[]>(
+      this.env.FSP_CORE_BASE_URL!,
+      `/core/v1.0/operators/${operatorId}/aircraft`,
+    );
   }
 
-  // -- GET /api/operators/{id}/instructors
-  async getInstructors(_operatorId: number): Promise<FspInstructor[]> {
-    notImplemented("getInstructors");
+  async getInstructors(operatorId: number): Promise<FspInstructor[]> {
+    return this.fspFetch<FspInstructor[]>(
+      this.env.FSP_CORE_BASE_URL!,
+      `/core/v1.0/operators/${operatorId}/instructors`,
+    );
   }
 
-  // -- GET /api/operators/{id}/activityTypes
-  async getActivityTypes(_operatorId: number): Promise<FspActivityType[]> {
-    notImplemented("getActivityTypes");
+  async getActivityTypes(operatorId: number): Promise<FspActivityType[]> {
+    return this.fspFetch<FspActivityType[]>(
+      this.env.FSP_API_BASE_URL!,
+      `/api/v1/operator/${operatorId}/activitytypes`,
+    );
   }
 
-  // -- GET /api/operators/{id}/schedulingGroups
   async getSchedulingGroups(
-    _operatorId: number,
+    operatorId: number,
   ): Promise<FspSchedulingGroup[]> {
-    notImplemented("getSchedulingGroups");
+    return this.fspFetch<FspSchedulingGroup[]>(
+      this.env.FSP_CORE_BASE_URL!,
+      `/common/v1.0/operators/${operatorId}/schedulinggroups`,
+    );
   }
 
-  // -- GET /api/operators/{id}/users
-  async getUsers(_operatorId: number): Promise<FspUser[]> {
-    notImplemented("getUsers");
+  async getUsers(operatorId: number): Promise<FspUser[]> {
+    return this.fspFetch<FspUser[]>(
+      this.env.FSP_CORE_BASE_URL!,
+      `/core/v1.0/operators/${operatorId}/users?limit=1000`,
+    );
   }
 
-  // -- POST /api/operators/{id}/availability
+  // ---------------------------------------------------------------------------
+  // Availability
+  // ---------------------------------------------------------------------------
+
   async getAvailability(
-    _operatorId: number,
-    _userIds: string[],
-    _startDate: string,
-    _endDate: string,
+    operatorId: number,
+    userIds: string[],
+    startDate: string,
+    endDate: string,
   ): Promise<FspAvailability[]> {
-    notImplemented("getAvailability");
+    return this.fspFetch<FspAvailability[]>(
+      this.env.FSP_CORE_BASE_URL!,
+      `/schedulinghub/v1.0/operators/${operatorId}/users/availabilityAndOverrides`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          userGuidIds: userIds,
+          startAtUtc: startDate,
+          endAtUtc: endDate,
+        }),
+      },
+    );
   }
 
-  // -- POST /api/operators/{id}/schedule
+  // ---------------------------------------------------------------------------
+  // Schedule
+  // ---------------------------------------------------------------------------
+
   async getSchedule(
     _operatorId: number,
-    _params: ScheduleQueryParams,
+    params: ScheduleQueryParams,
   ): Promise<FspScheduleResponse> {
-    notImplemented("getSchedule");
+    return this.fspFetch<FspScheduleResponse>(
+      this.env.FSP_API_BASE_URL!,
+      "/api/v2/schedule",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          start: params.start,
+          end: params.end,
+          locationIds: params.locationIds,
+          outputFormat: "bryntum",
+          pageSize: 500,
+        }),
+      },
+    );
   }
 
-  // -- GET /api/operators/{id}/schedulableEvents
+  // ---------------------------------------------------------------------------
+  // Schedulable Events
+  // ---------------------------------------------------------------------------
+
   async getSchedulableEvents(
-    _operatorId: number,
-    _params: SchedulableEventsParams,
+    operatorId: number,
+    params: SchedulableEventsParams,
   ): Promise<FspSchedulableEvent[]> {
-    notImplemented("getSchedulableEvents");
+    return this.fspFetch<FspSchedulableEvent[]>(
+      this.env.FSP_CURRICULUM_BASE_URL!,
+      `/traininghub/v1.0/operators/${operatorId}/schedulableEvents`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          startDate: params.startDate,
+          endDate: params.endDate,
+          locationId: params.locationId,
+          listType: 1,
+          filters: [],
+          priorities: [],
+          useAllInstructors: false,
+        }),
+      },
+    );
   }
 
-  // -- POST /api/operators/{id}/findATime
+  // ---------------------------------------------------------------------------
+  // Scheduling Tools
+  // ---------------------------------------------------------------------------
+
   async findATime(
-    _operatorId: number,
-    _params: FindATimeParams,
+    operatorId: number,
+    params: FindATimeParams,
   ): Promise<SlotOption[]> {
-    notImplemented("findATime");
+    // FSP returns availability slots; map to SlotOption[]
+    interface FspSlotResponse {
+      startTime?: string;
+      endTime?: string;
+      instructorId?: string;
+      aircraftId?: string;
+      locationId?: number;
+      score?: number;
+    }
+
+    const rawSlots = await this.fspFetch<FspSlotResponse[]>(
+      this.env.FSP_CORE_BASE_URL!,
+      `/schedulinghub/v1.0/operators/${operatorId}/scheduleMatch/availability`,
+      {
+        method: "POST",
+        body: JSON.stringify(params),
+      },
+    );
+
+    return rawSlots.map((slot) => ({
+      startTime: new Date(slot.startTime ?? ""),
+      endTime: new Date(slot.endTime ?? ""),
+      instructorId: slot.instructorId,
+      aircraftId: slot.aircraftId,
+      locationId: slot.locationId ?? 0,
+      score: slot.score ?? 0,
+    }));
   }
 
-  // -- POST /api/operators/{id}/autoSchedule
   async autoSchedule(
-    _operatorId: number,
-    _payload: FspAutoSchedulePayload,
+    operatorId: number,
+    payload: FspAutoSchedulePayload,
   ): Promise<FspAutoScheduleResult> {
-    notImplemented("autoSchedule");
+    return this.fspFetch<FspAutoScheduleResult>(
+      this.env.FSP_CORE_BASE_URL!,
+      `/schedulinghub/v1.0/operators/${operatorId}/autoSchedule`,
+      {
+        method: "POST",
+        body: JSON.stringify(payload),
+      },
+    );
   }
 
-  // -- POST /api/operators/{id}/reservations/validate
+  // ---------------------------------------------------------------------------
+  // Reservations
+  // ---------------------------------------------------------------------------
+
   async validateReservation(
     _operatorId: number,
-    _reservation: FspReservationCreate,
+    reservation: FspReservationCreate,
   ): Promise<FspReservationResponse> {
-    notImplemented("validateReservation");
+    return this.fspFetch<FspReservationResponse>(
+      this.env.FSP_API_BASE_URL!,
+      "/api/V2/Reservation",
+      {
+        method: "POST",
+        body: JSON.stringify({ ...reservation, validateOnly: true }),
+      },
+    );
   }
 
-  // -- POST /api/operators/{id}/reservations
   async createReservation(
     _operatorId: number,
-    _reservation: FspReservationCreate,
+    reservation: FspReservationCreate,
   ): Promise<FspReservationResponse> {
-    notImplemented("createReservation");
+    return this.fspFetch<FspReservationResponse>(
+      this.env.FSP_API_BASE_URL!,
+      "/api/V2/Reservation",
+      {
+        method: "POST",
+        body: JSON.stringify({ ...reservation, validateOnly: false }),
+      },
+    );
   }
 
-  // -- GET /api/operators/{id}/reservations/{reservationId}
   async getReservation(
-    _operatorId: number,
-    _reservationId: string,
+    operatorId: number,
+    reservationId: string,
   ): Promise<FspReservationListItem> {
-    notImplemented("getReservation");
+    return this.fspFetch<FspReservationListItem>(
+      this.env.FSP_API_BASE_URL!,
+      `/api/V2/Reservation/${reservationId}?operatorId=${operatorId}`,
+    );
   }
 
-  // -- GET /api/operators/{id}/reservations
   async listReservations(
-    _operatorId: number,
-    _params: ReservationListParams,
+    operatorId: number,
+    params: ReservationListParams,
   ): Promise<FspReservationListItem[]> {
-    notImplemented("listReservations");
+    interface FspPaginatedResponse {
+      total: number;
+      pageIndex: number;
+      pageSize: number;
+      results: FspReservationListItem[];
+    }
+
+    const response = await this.fspFetch<FspPaginatedResponse>(
+      this.env.FSP_API_BASE_URL!,
+      `/api/V1/operator/${operatorId}/operatorReservations/list`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          dateRangeType: 3,
+          startRange: params.start,
+          endRange: params.end,
+          locationIds: params.locationIds ?? [],
+          pageSize: 500,
+          pageIndex: 0,
+        }),
+      },
+    );
+
+    return response.results;
   }
 
-  // -- GET /api/operators/{id}/enrollments?studentId=
+  // ---------------------------------------------------------------------------
+  // Training
+  // ---------------------------------------------------------------------------
+
   async getEnrollments(
-    _operatorId: number,
-    _studentId: string,
+    operatorId: number,
+    studentId: string,
   ): Promise<FspEnrollment[]> {
-    notImplemented("getEnrollments");
+    return this.fspFetch<FspEnrollment[]>(
+      this.env.FSP_CURRICULUM_BASE_URL!,
+      `/traininghub/v1.0/operators/${operatorId}/enrollments/list/${studentId}`,
+    );
   }
 
-  // -- GET /api/operators/{id}/enrollments/{enrollmentId}/progress
   async getEnrollmentProgress(
-    _operatorId: number,
-    _enrollmentId: string,
+    operatorId: number,
+    enrollmentId: string,
   ): Promise<FspEnrollmentProgress> {
-    notImplemented("getEnrollmentProgress");
+    return this.fspFetch<FspEnrollmentProgress>(
+      this.env.FSP_CURRICULUM_BASE_URL!,
+      `/traininghub/v1.0/operators/${operatorId}/enrollments/${enrollmentId}/progress`,
+    );
   }
 
-  // -- GET /api/operators/{id}/civilTwilight/{locationId}
+  // ---------------------------------------------------------------------------
+  // Environment
+  // ---------------------------------------------------------------------------
+
   async getCivilTwilight(
-    _operatorId: number,
-    _locationId: string,
+    operatorId: number,
+    locationId: string,
   ): Promise<FspCivilTwilight> {
-    notImplemented("getCivilTwilight");
+    return this.fspFetch<FspCivilTwilight>(
+      this.env.FSP_CORE_BASE_URL!,
+      `/common/v1.0/operators/${operatorId}/locations/${locationId}/civilTwilight`,
+    );
   }
 }
