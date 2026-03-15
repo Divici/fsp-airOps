@@ -32,14 +32,12 @@ export function Sidebar({ className }: { className?: string }) {
     >
       {/* Branding */}
       <div className="flex h-14 items-center gap-2.5 px-4">
-        <div className="flex size-7 items-center justify-center rounded-md bg-sidebar-primary">
-          <Plane className="size-4 text-sidebar-primary-foreground" />
-        </div>
+        <Plane className="size-5 text-primary" />
         <div className="flex flex-col">
-          <span className="text-sm font-semibold leading-tight tracking-tight">
+          <span className="text-sm font-semibold leading-tight tracking-tight text-foreground">
             AirOps
           </span>
-          <span className="text-[10px] leading-tight text-sidebar-foreground/50">
+          <span className="text-[10px] leading-tight text-muted-foreground">
             by Flight Schedule Pro
           </span>
         </div>
