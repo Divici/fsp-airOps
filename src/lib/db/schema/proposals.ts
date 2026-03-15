@@ -20,7 +20,7 @@ export const proposals = pgTable(
     operatorId: integer().notNull(),
     workflowType: text()
       .notNull()
-      .$type<"reschedule" | "discovery_flight" | "next_lesson" | "waitlist">(),
+      .$type<"reschedule" | "discovery_flight" | "next_lesson" | "waitlist" | "inactivity_outreach">(),
     triggerId: uuid().references(() => schedulingTriggers.id),
     status: text()
       .notNull()

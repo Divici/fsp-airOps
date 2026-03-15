@@ -12,6 +12,7 @@ const WORKFLOW_PRIORITY: Record<WorkflowType, number> = {
   reschedule: 80,
   discovery_flight: 60,
   next_lesson: 40,
+  inactivity_outreach: 30,
   waitlist: 20,
 };
 
