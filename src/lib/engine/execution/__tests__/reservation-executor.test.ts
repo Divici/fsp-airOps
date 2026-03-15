@@ -123,6 +123,8 @@ function makeMockFspClient(
     createReservation: vi.fn().mockResolvedValue(createOk()),
     getReservation: vi.fn(),
     listReservations: vi.fn(),
+    batchCreateReservations: vi.fn().mockResolvedValue({ batchId: "batch-123", status: "completed" }),
+    getBatchStatus: vi.fn().mockResolvedValue({ batchId: "batch-123", status: "completed", results: [] }),
     getEnrollments: vi.fn(),
     getEnrollmentProgress: vi.fn(),
     getCivilTwilight: vi.fn(),
@@ -543,5 +545,68 @@ describe("ReservationExecutor", () => {
       ACTION_ID_1,
       "Network timeout"
     );
+  });
+
+  // -----------------------------------------------------------------------
+  // Batch mode tests
+  // -----------------------------------------------------------------------
+
+  describe("batch mode", () => {
+    let batchExecutor: ReservationExecutor;
+
+    beforeEach(() => {
+      batchExecutor = new ReservationExecutor(mockDb, fspClient, auditService, {
+        timezoneResolver: () => "America/Los_Angeles",
+        batchMode: true,
+        batchPollIntervalMs: 0, // no delay in tests
+        batchMaxPolls: 3,
+      });
+    });
+
+    it("uses batch API when multiple actions and batch mode is enabled", async () => {
+      const action1 = makeAction({ id: ACTION_ID_1, rank: 1 });
+      const action2 = makeAction({ id: ACTION_ID_2, rank: 2 });
+      mockGetProposalById.mockResolvedValue(makeProposal([action1, action2]));
+
+      (fspClient.getBatchStatus as ReturnType<typeof vi.fn>).mockResolvedValue({
+        batchId: "batch-123",
+        status: "completed",
+        results: [
+          { reservationId: 1001 },
+          { reservationId: 1002 },
+        ],
+      });
+
+      const result = await batchExecutor.executeProposal(OPERATOR_ID, PROPOSAL_ID);
+
+      expect(result.success).toBe(true);
+      expect(result.results).toHaveLength(2);
+      expect(fspClient.batchCreateReservations).toHaveBeenCalledTimes(1);
+    });
+
+    it("falls back to sequential when batch API throws", async () => {
+      const action1 = makeAction({ id: ACTION_ID_1, rank: 1 });
+      const action2 = makeAction({ id: ACTION_ID_2, rank: 2 });
+      mockGetProposalById.mockResolvedValue(makeProposal([action1, action2]));
+
+      (fspClient.batchCreateReservations as ReturnType<typeof vi.fn>).mockRejectedValue(
+        new Error("Batch not supported")
+      );
+
+      const result = await batchExecutor.executeProposal(OPERATOR_ID, PROPOSAL_ID);
+
+      // Falls back to sequential — should still succeed
+      expect(result.success).toBe(true);
+      expect(result.results).toHaveLength(2);
+      expect(fspClient.createReservation).toHaveBeenCalledTimes(2);
+    });
+
+    it("uses sequential for single-action proposals even in batch mode", async () => {
+      const result = await batchExecutor.executeProposal(OPERATOR_ID, PROPOSAL_ID);
+
+      expect(result.success).toBe(true);
+      expect(fspClient.batchCreateReservations).not.toHaveBeenCalled();
+      expect(fspClient.createReservation).toHaveBeenCalledTimes(1);
+    });
   });
 });

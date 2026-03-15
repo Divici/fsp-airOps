@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { WaitlistRanker } from "../ranker";
-import type { WaitlistCandidate, WaitlistWeights } from "../types";
+import type { WaitlistCandidate, WaitlistWeights, CustomWeight } from "../types";
 
 function makeCandidate(
   overrides: Partial<WaitlistCandidate> & { studentId: string },
@@ -193,5 +193,187 @@ describe("WaitlistRanker", () => {
   it("should return empty array for no candidates", () => {
     const ranker = new WaitlistRanker(equalWeights);
     expect(ranker.rankCandidates([])).toEqual([]);
+  });
+
+  // -----------------------------------------------------------------------
+  // Custom weights tests
+  // -----------------------------------------------------------------------
+
+  describe("custom weights", () => {
+    it("should apply enabled custom weights to scoring", () => {
+      const customWeights: CustomWeight[] = [
+        {
+          name: "Total hours bonus",
+          signal: "totalHours",
+          weight: 5,
+          enabled: true,
+        },
+      ];
+
+      // With custom weight on totalHours, the built-in totalHours weight is overridden
+      const ranker = new WaitlistRanker(
+        {
+          timeSinceLastFlight: 0,
+          timeUntilNextFlight: 0,
+          totalHours: 1, // this will be overridden
+          instructorContinuity: 0,
+          aircraftFamiliarity: 0,
+        },
+        customWeights,
+      );
+
+      const candidates: WaitlistCandidate[] = [
+        makeCandidate({
+          studentId: "low-hours",
+          studentName: "Low Hours",
+          signals: {
+            timeSinceLastFlight: 50,
+            timeUntilNextFlight: 50,
+            totalHours: 10,
+            instructorContinuity: 0,
+            aircraftFamiliarity: 0,
+          },
+        }),
+        makeCandidate({
+          studentId: "high-hours",
+          studentName: "High Hours",
+          signals: {
+            timeSinceLastFlight: 50,
+            timeUntilNextFlight: 50,
+            totalHours: 100,
+            instructorContinuity: 0,
+            aircraftFamiliarity: 0,
+          },
+        }),
+      ];
+
+      const ranked = ranker.rankCandidates(candidates);
+      expect(ranked[0].studentName).toBe("High Hours");
+    });
+
+    it("should ignore disabled custom weights", () => {
+      const customWeights: CustomWeight[] = [
+        {
+          name: "Disabled weight",
+          signal: "totalHours",
+          weight: 100,
+          enabled: false,
+        },
+      ];
+
+      const ranker = new WaitlistRanker(
+        {
+          timeSinceLastFlight: 1,
+          timeUntilNextFlight: 0,
+          totalHours: 0,
+          instructorContinuity: 0,
+          aircraftFamiliarity: 0,
+        },
+        customWeights,
+      );
+
+      const candidates: WaitlistCandidate[] = [
+        makeCandidate({
+          studentId: "a",
+          studentName: "Student A",
+          signals: {
+            timeSinceLastFlight: 100,
+            timeUntilNextFlight: 50,
+            totalHours: 10,
+            instructorContinuity: 0,
+            aircraftFamiliarity: 0,
+          },
+        }),
+        makeCandidate({
+          studentId: "b",
+          studentName: "Student B",
+          signals: {
+            timeSinceLastFlight: 10,
+            timeUntilNextFlight: 50,
+            totalHours: 100,
+            instructorContinuity: 0,
+            aircraftFamiliarity: 0,
+          },
+        }),
+      ];
+
+      // timeSinceLastFlight drives the ranking since custom weight is disabled
+      const ranked = ranker.rankCandidates(candidates);
+      expect(ranked[0].studentName).toBe("Student A");
+    });
+
+    it("should work with empty custom weights array", () => {
+      const ranker = new WaitlistRanker(equalWeights, []);
+
+      const candidates: WaitlistCandidate[] = [
+        makeCandidate({
+          studentId: "a",
+          studentName: "Alpha",
+          signals: {
+            timeSinceLastFlight: 50,
+            timeUntilNextFlight: 50,
+            totalHours: 20,
+            instructorContinuity: 1,
+            aircraftFamiliarity: 1,
+          },
+        }),
+      ];
+
+      const ranked = ranker.rankCandidates(candidates);
+      expect(ranked).toHaveLength(1);
+      expect(ranked[0].eligibilityScore).toBeGreaterThan(0);
+    });
+
+    it("should override built-in signal when custom signal matches", () => {
+      // Custom weight for daysSinceLastFlight overrides built-in timeSinceLastFlight
+      const customWeights: CustomWeight[] = [
+        {
+          name: "Recency override",
+          signal: "daysSinceLastFlight",
+          weight: 10,
+          enabled: true,
+        },
+      ];
+
+      const ranker = new WaitlistRanker(
+        {
+          timeSinceLastFlight: 5, // should be overridden
+          timeUntilNextFlight: 0,
+          totalHours: 0,
+          instructorContinuity: 0,
+          aircraftFamiliarity: 0,
+        },
+        customWeights,
+      );
+
+      const candidates: WaitlistCandidate[] = [
+        makeCandidate({
+          studentId: "a",
+          studentName: "Student A",
+          signals: {
+            timeSinceLastFlight: 240, // 10 days
+            timeUntilNextFlight: 50,
+            totalHours: 20,
+            instructorContinuity: 0,
+            aircraftFamiliarity: 0,
+          },
+        }),
+        makeCandidate({
+          studentId: "b",
+          studentName: "Student B",
+          signals: {
+            timeSinceLastFlight: 24, // 1 day
+            timeUntilNextFlight: 50,
+            totalHours: 20,
+            instructorContinuity: 0,
+            aircraftFamiliarity: 0,
+          },
+        }),
+      ];
+
+      const ranked = ranker.rankCandidates(candidates);
+      // Student A has more days since last flight → higher custom score
+      expect(ranked[0].studentName).toBe("Student A");
+    });
   });
 });

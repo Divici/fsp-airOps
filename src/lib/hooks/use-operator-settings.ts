@@ -25,6 +25,12 @@ export interface OperatorSettings {
     email: boolean;
     sms: boolean;
   };
+  customWeights: Array<{
+    name: string;
+    signal: "daysSinceLastFlight" | "daysUntilExpiry" | "totalHours" | "lessonCompletionRate";
+    weight: number;
+    enabled: boolean;
+  }>;
   autoApprovalEnabled: boolean;
   autoApprovalThreshold: number;
 }

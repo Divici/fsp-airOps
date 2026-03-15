@@ -19,6 +19,12 @@ export const DEFAULT_OPERATOR_SETTINGS = {
     email: true,
     sms: false,
   },
+  customWeights: [] as Array<{
+    name: string;
+    signal: string;
+    weight: number;
+    enabled: boolean;
+  }>,
   autoApprovalEnabled: false,
   autoApprovalThreshold: 0.7,
 } as const;

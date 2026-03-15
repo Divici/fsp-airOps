@@ -48,6 +48,7 @@ const mockSettings: OperatorSettings = {
   communicationPreferences: { email: true, sms: false },
   autoApprovalEnabled: false,
   autoApprovalThreshold: 0.7,
+    customWeights: [],
   createdAt: new Date("2026-01-01"),
   updatedAt: new Date("2026-01-01"),
 };
@@ -86,6 +87,7 @@ vi.mock("@/lib/db/queries/operator-settings", () => ({
     communicationPreferences: { email: true, sms: false },
     autoApprovalEnabled: false,
     autoApprovalThreshold: 0.7,
+    customWeights: [],
     createdAt: new Date("2026-01-01"),
     updatedAt: new Date("2026-01-01"),
   }),

@@ -32,6 +32,8 @@ import type {
   ScheduleQueryParams,
   SchedulableEventsParams,
   ReservationListParams,
+  BatchReservationResponse,
+  BatchStatusResponse,
 } from "../types";
 
 import { mockLocations } from "./data/locations";
@@ -320,6 +322,47 @@ export class MockFspClient implements IFspClient {
     _params: ReservationListParams,
   ): Promise<FspReservationListItem[]> {
     return this.reservations;
+  }
+
+  // -- Batch Reservations ---------------------------------------------------
+
+  async batchCreateReservations(
+    _operatorId: number,
+    reservations: FspReservationCreate[],
+  ): Promise<BatchReservationResponse> {
+    // Create all reservations immediately in mock
+    for (const reservation of reservations) {
+      const id = `res-gen-${this.nextReservationNumber}`;
+      const num = this.nextReservationNumber++;
+
+      this.reservations.push({
+        reservationId: id,
+        reservationNumber: num,
+        resource: reservation.aircraftId,
+        start: reservation.start,
+        end: reservation.end,
+        pilotFirstName: "Mock",
+        pilotLastName: "Pilot",
+        pilotId: reservation.pilotId,
+        status: 1,
+      });
+    }
+
+    return {
+      batchId: `batch-${Date.now()}`,
+      status: "completed",
+    };
+  }
+
+  async getBatchStatus(
+    _operatorId: number,
+    batchId: string,
+  ): Promise<BatchStatusResponse> {
+    return {
+      batchId,
+      status: "completed",
+      results: [],
+    };
   }
 
   // -- Training -------------------------------------------------------------

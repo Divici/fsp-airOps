@@ -1,0 +1,1 @@
+ALTER TABLE "operator_settings" ADD COLUMN "customWeights" jsonb DEFAULT '[]'::jsonb NOT NULL;

@@ -23,7 +23,21 @@ import type {
   FspEnrollmentProgress,
   FspCivilTwilight,
 } from "@/lib/types/fsp";
+export type { FspReservationCreate } from "@/lib/types/fsp";
 import type { SlotOption } from "@/lib/types/workflow";
+
+// ---- Batch Reservation Types -----------------------------------------------
+
+export interface BatchReservationResponse {
+  batchId: string;
+  status: string;
+}
+
+export interface BatchStatusResponse {
+  batchId: string;
+  status: "pending" | "processing" | "completed" | "failed";
+  results: Array<{ reservationId?: number; error?: string }>;
+}
 
 // ---- Params ---------------------------------------------------------------
 
@@ -119,6 +133,16 @@ export interface IFspClient {
     operatorId: number,
     params: ReservationListParams,
   ): Promise<FspReservationListItem[]>;
+
+  // Batch Reservations
+  batchCreateReservations(
+    operatorId: number,
+    reservations: FspReservationCreate[],
+  ): Promise<BatchReservationResponse>;
+  getBatchStatus(
+    operatorId: number,
+    batchId: string,
+  ): Promise<BatchStatusResponse>;
 
   // Training
   getEnrollments(

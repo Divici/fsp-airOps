@@ -58,3 +58,25 @@ export interface WaitlistWeights {
   instructorContinuity: number;
   aircraftFamiliarity: number;
 }
+
+/** Operator-defined custom weight entry. */
+export interface CustomWeight {
+  name: string;
+  signal: string;
+  weight: number;
+  enabled: boolean;
+}
+
+/**
+ * Map of custom signal names to their resolver functions.
+ * Each resolver extracts a numeric value from a WaitlistCandidate's signals.
+ */
+export type CustomSignalResolver = (signals: WaitlistSignals) => number;
+
+/** Built-in custom signal names and their mapping to WaitlistSignals fields. */
+export const CUSTOM_SIGNAL_MAP: Record<string, CustomSignalResolver> = {
+  daysSinceLastFlight: (s) => s.timeSinceLastFlight / 24,
+  daysUntilExpiry: (s) => s.timeUntilNextFlight / 24,
+  totalHours: (s) => s.totalHours,
+  lessonCompletionRate: (s) => s.instructorContinuity, // maps to a 0-1 signal
+};

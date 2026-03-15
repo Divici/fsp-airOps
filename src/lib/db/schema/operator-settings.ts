@@ -36,6 +36,17 @@ export const operatorSettings = pgTable(
     communicationPreferences: jsonb()
       .notNull()
       .default({ email: true, sms: false }),
+    customWeights: jsonb()
+      .notNull()
+      .default([])
+      .$type<
+        Array<{
+          name: string;
+          signal: string;
+          weight: number;
+          enabled: boolean;
+        }>
+      >(),
     autoApprovalEnabled: boolean().notNull().default(false),
     autoApprovalThreshold: real().notNull().default(0.7),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
