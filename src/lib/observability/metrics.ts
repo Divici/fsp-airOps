@@ -134,8 +134,64 @@ export class MetricsCollector {
     return entry?.type === "gauge" ? entry.value : undefined;
   }
 
+  /**
+   * Export all metrics in Prometheus text exposition format (v0.0.4).
+   *
+   * - Counters  → `fsp_<name>_total`  (TYPE counter)
+   * - Gauges    → `fsp_<name>`        (TYPE gauge)
+   * - Timings   → `fsp_<name>_count`, `_sum`, `_min`, `_max` (TYPE summary)
+   */
+  toPrometheusFormat(): string {
+    const snapshot = this.getMetrics();
+    const lines: string[] = [];
+
+    // Counters
+    for (const [name, entry] of Object.entries(snapshot.counters)) {
+      const pName = toPrometheusName(name) + "_total";
+      lines.push(`# HELP fsp_${pName} Counter for ${name}`);
+      lines.push(`# TYPE fsp_${pName} counter`);
+      lines.push(`fsp_${pName} ${entry.value}`);
+    }
+
+    // Gauges
+    for (const [name, entry] of Object.entries(snapshot.gauges)) {
+      const pName = toPrometheusName(name);
+      lines.push(`# HELP fsp_${pName} Gauge for ${name}`);
+      lines.push(`# TYPE fsp_${pName} gauge`);
+      lines.push(`fsp_${pName} ${entry.value}`);
+    }
+
+    // Timings — emitted as summary-style metrics
+    for (const [name, entry] of Object.entries(snapshot.timings)) {
+      const pName = toPrometheusName(name);
+      const count = entry.values.length;
+      const sum = entry.values.reduce((a, b) => a + b, 0);
+      const min = count > 0 ? Math.min(...entry.values) : 0;
+      const max = count > 0 ? Math.max(...entry.values) : 0;
+
+      lines.push(`# HELP fsp_${pName} Timing summary for ${name}`);
+      lines.push(`# TYPE fsp_${pName} summary`);
+      lines.push(`fsp_${pName}_count ${count}`);
+      lines.push(`fsp_${pName}_sum ${sum}`);
+      lines.push(`fsp_${pName}_min ${min}`);
+      lines.push(`fsp_${pName}_max ${max}`);
+    }
+
+    return lines.join("\n") + "\n";
+  }
+
   /** Reset all metrics. */
   reset(): void {
     this.entries.clear();
   }
+}
+
+/** Convert a metric name to Prometheus-compatible snake_case. */
+function toPrometheusName(name: string): string {
+  return name
+    .replace(/[^a-zA-Z0-9_]/g, "_")
+    .replace(/([a-z])([A-Z])/g, "$1_$2")
+    .toLowerCase()
+    .replace(/_+/g, "_")
+    .replace(/^_|_$/g, "");
 }
