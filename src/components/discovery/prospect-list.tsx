@@ -1,6 +1,6 @@
 "use client";
 
-import { Plane, AlertCircle, Inbox } from "lucide-react";
+import { Plane, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProspectCard } from "./prospect-card";
