@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { CommunicationService } from "../communication-service";
 import { FspEmailProvider } from "../email-provider";
 import { SmsProvider } from "../sms-provider";
@@ -194,5 +194,84 @@ describe("Templates", () => {
     // Variables not provided should remain as {{variable}}
     expect(rendered.body).toContain("{{workflowType}}");
     expect(rendered.body).toContain("{{studentName}}");
+  });
+});
+
+describe("FspEmailProvider", () => {
+  const originalEnv = { ...process.env };
+
+  afterEach(() => {
+    process.env = { ...originalEnv };
+  });
+
+  it("falls back to stub when SENDGRID_API_KEY is missing", async () => {
+    delete process.env.SENDGRID_API_KEY;
+    delete process.env.SENDGRID_FROM_EMAIL;
+
+    const provider = new FspEmailProvider();
+    const result = await provider.send({
+      channel: "email",
+      to: "test@example.com",
+      subject: "Test",
+      body: "Hello",
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.messageId).toMatch(/^email-stub-/);
+  });
+
+  it("falls back to stub when only API key is set but FROM is missing", async () => {
+    process.env.SENDGRID_API_KEY = "SG.test";
+    delete process.env.SENDGRID_FROM_EMAIL;
+
+    const provider = new FspEmailProvider();
+    const result = await provider.send({
+      channel: "email",
+      to: "test@example.com",
+      body: "Hello",
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.messageId).toMatch(/^email-stub-/);
+  });
+});
+
+describe("SmsProvider", () => {
+  const originalEnv = { ...process.env };
+
+  afterEach(() => {
+    process.env = { ...originalEnv };
+  });
+
+  it("falls back to stub when Twilio credentials are missing", async () => {
+    delete process.env.TWILIO_ACCOUNT_SID;
+    delete process.env.TWILIO_AUTH_TOKEN;
+    delete process.env.TWILIO_FROM_NUMBER;
+
+    const provider = new SmsProvider();
+    const result = await provider.send({
+      channel: "sms",
+      to: "+15551234567",
+      body: "Test message",
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.messageId).toMatch(/^sms-stub-/);
+  });
+
+  it("falls back to stub when only partial credentials are set", async () => {
+    process.env.TWILIO_ACCOUNT_SID = "AC_test";
+    delete process.env.TWILIO_AUTH_TOKEN;
+    delete process.env.TWILIO_FROM_NUMBER;
+
+    const provider = new SmsProvider();
+    const result = await provider.send({
+      channel: "sms",
+      to: "+15551234567",
+      body: "Test message",
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.messageId).toMatch(/^sms-stub-/);
   });
 });

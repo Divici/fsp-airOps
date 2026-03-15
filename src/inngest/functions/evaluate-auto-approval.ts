@@ -19,6 +19,7 @@ import { createFspClient } from "@/lib/fsp-client";
 import { ReservationExecutor } from "@/lib/engine/execution/reservation-executor";
 import { AuditService } from "@/lib/engine/audit";
 import { AUDIT_EVENT_TYPES } from "@/lib/types/audit";
+import { sendApprovalNotification } from "@/lib/comms";
 
 export const evaluateAutoApproval = inngest.createFunction(
   { id: "evaluate-auto-approval", retries: 2 },
@@ -220,6 +221,26 @@ export const evaluateAutoApproval = inngest.createFunction(
           return { executed: true, success: result.success };
         },
       );
+
+      // Step 6: Send notification (trackable via Inngest step)
+      await step.run("send-notification", async () => {
+        if (
+          executionResult &&
+          "executed" in executionResult &&
+          executionResult.executed
+        ) {
+          // Re-fetch the proposal to get proper Date types (Inngest serializes)
+          const freshProposal = await getProposalById(db, operatorId, proposalId);
+          if (freshProposal) {
+            await sendApprovalNotification({
+              db,
+              operatorId,
+              proposal: freshProposal,
+              executionSuccess: Boolean(executionResult.success),
+            });
+          }
+        }
+      });
 
       return {
         decision: "approve",
