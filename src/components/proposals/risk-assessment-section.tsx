@@ -55,24 +55,30 @@ function ConfidenceBar({ confidence }: { confidence: number }) {
   );
 }
 
+const TOOL_LABELS: Record<string, string> = {
+  checkSlotAvailability: "Checked slot availability",
+  getStudentHistory: "Reviewed student flight history",
+  getStudentProgress: "Checked training progress",
+  getInstructorSchedule: "Reviewed instructor schedule",
+  getWeather: "Checked weather conditions",
+  getOriginalContext: "Reviewed original event details",
+};
+
+const METHOD_LABELS: Record<string, string> = {
+  ai: "AI-powered analysis",
+  deterministic: "Rule-based analysis",
+};
+
 function ToolCallItem({
   call,
 }: {
   call: RiskAssessmentData["toolCalls"][number];
 }) {
-  const inputSummary = Object.entries(call.input)
-    .slice(0, 3)
-    .map(([k, v]) => `${k}: ${typeof v === "string" ? v : JSON.stringify(v)}`)
-    .join(", ");
+  const label = TOOL_LABELS[call.tool] ?? call.tool;
 
   return (
     <div className="flex items-center justify-between rounded-md bg-muted/50 px-3 py-2 text-xs">
-      <div className="min-w-0 flex-1">
-        <span className="font-medium">{call.tool}</span>
-        {inputSummary && (
-          <span className="ml-2 text-muted-foreground">{inputSummary}</span>
-        )}
-      </div>
+      <span className="font-medium">{label}</span>
       <span className="ml-2 flex-shrink-0 tabular-nums text-muted-foreground">
         {call.durationMs}ms
       </span>
@@ -106,7 +112,7 @@ export function RiskAssessmentSection({ data }: RiskAssessmentSectionProps) {
           </span>
         )}
         <span className="text-xs text-muted-foreground">
-          Method: {decision.method}
+          {METHOD_LABELS[decision.method] ?? decision.method}
         </span>
       </div>
 

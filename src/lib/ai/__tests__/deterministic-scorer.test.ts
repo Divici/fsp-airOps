@@ -220,7 +220,7 @@ describe("computeDeterministicScore", () => {
   it("includes reasoning in the decision", () => {
     const result = computeDeterministicScore(makeContext());
 
-    expect(result.reasoning).toContain("Deterministic assessment");
-    expect(result.reasoning).toContain("reschedule");
+    expect(result.reasoning).toContain("risk");
+    expect(result.reasoning).toContain("Reschedule");
   });
 });

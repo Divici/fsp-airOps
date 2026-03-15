@@ -11,6 +11,13 @@ const WORKFLOW_RISK: Record<string, number> = {
   discovery_flight: 0.3,
 };
 
+const WORKFLOW_LABELS: Record<string, string> = {
+  reschedule: "Reschedule",
+  next_lesson: "Next Lesson",
+  waitlist: "Waitlist",
+  discovery_flight: "Discovery Flight",
+};
+
 /**
  * Computes a deterministic auto-approval decision based on proposal attributes.
  * Used as a fallback when the AI agent is unavailable or exceeds iteration limits.
@@ -27,11 +34,11 @@ export function computeDeterministicScore(
   riskScore += baseRisk;
   if (baseRisk >= 0.2) {
     riskFactors.push(
-      `Higher-risk workflow type: ${context.proposal.workflowType}`,
+      `Higher-risk workflow type: ${WORKFLOW_LABELS[context.proposal.workflowType] ?? context.proposal.workflowType}`,
     );
   } else {
     mitigations.push(
-      `Low-risk workflow type: ${context.proposal.workflowType}`,
+      `Low-risk workflow type: ${WORKFLOW_LABELS[context.proposal.workflowType] ?? context.proposal.workflowType}`,
     );
   }
 
@@ -81,7 +88,7 @@ export function computeDeterministicScore(
   return {
     decision,
     confidence,
-    reasoning: `Deterministic assessment: ${decision === "approve" ? "Low" : "Elevated"} risk based on ${context.proposal.workflowType} workflow type. Confidence ${(confidence * 100).toFixed(0)}% vs threshold ${(threshold * 100).toFixed(0)}%.`,
+    reasoning: `${decision === "approve" ? "Low" : "Elevated"} risk based on ${WORKFLOW_LABELS[context.proposal.workflowType] ?? context.proposal.workflowType} workflow. Confidence ${(confidence * 100).toFixed(0)}% vs threshold ${(threshold * 100).toFixed(0)}%.`,
     riskFactors,
     mitigations,
     toolCalls: [],
