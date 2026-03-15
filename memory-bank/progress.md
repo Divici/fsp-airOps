@@ -73,25 +73,32 @@
 - [x] UI label fixes ("Executed" → "Approved"), filter labels, newest-first sort
 - [x] Mutation loading state: await invalidateQueries
 
-## In Progress
-Nothing active — MVP is feature-complete.
+### Pre-Credentials Hardening
+- [x] Auto-approver feature (tool-calling AI agent with OpenAI gpt-4o, 6 scheduling tools, async via Inngest, deterministic fallback, per-operator config)
+- [x] Seed script (`pnpm db:seed`) for demo data
+- [x] RealFspClient HTTP methods implemented (GET/POST/PUT/DELETE with auth headers)
+- [x] Rate limiter for FSP API calls (55 req/60s)
+- [x] Snapshot persistence moved to database (was in-memory Map)
+- [x] Empty/error states added to all UI views
 
-## Not Started (Post-MVP)
-- [ ] Real FSP API integration (awaiting credentials)
-- [ ] Real auth (currently mock mode, auto-injects operatorId: 1)
+## In Progress
+Nothing active — all pre-credentials work is complete.
+
+## Not Started (Post-Credentials)
+- [ ] FSP credentials acquisition (subscription key, write API access, test operator)
+- [ ] Real FSP API testing (validate RealFspClient against live endpoints)
 - [ ] Communication provider wiring (Twilio/SendGrid)
-- [ ] Durable snapshot persistence (currently in-memory Map)
+- [ ] Real auth (currently mock mode, auto-injects operatorId: 1)
 - [ ] Deployment pipeline (target Azure)
 - [ ] Multi-tenant onboarding flow
 - [ ] Performance testing with real FSP data volumes
 
 ## Known Issues
-- No FSP dev credentials — building mock-first. Request sent to FSP technical contact.
+- No FSP dev credentials — building mock-first. Waiting on FSP tech contact for: subscription key, write API access, test operator.
 - FSP public developer API is READ-ONLY; write endpoints require internal API access.
-- Snapshot persistence is in-memory (lost on restart).
 - Auth is mock-only (middleware auto-injects operatorId: 1).
 - Communication providers are interface stubs (no Twilio/SendGrid).
-- FSP real client: all 18 methods are stubs awaiting credentials.
+- In-memory metrics (lost on restart, needs export to real backend for production).
 
 ## Test Count
-518 tests across 43 test files
+551 tests across 47 test files

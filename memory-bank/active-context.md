@@ -1,7 +1,7 @@
 # Active Context: FSP Agentic Scheduler
 
 ## Current Phase
-All 6 implementation phases complete. MVP is feature-complete and UI-wired. Awaiting FSP dev credentials for real integration.
+All pre-credentials work is complete. MVP is feature-complete, UI-wired, auto-approver built, and seed data available. Awaiting FSP dev credentials for real integration.
 
 ## Active Plan
 See `memory-bank/plans/mvp-implementation-plan.md` and `.claude/plans/functional-tinkering-fairy.md`.
@@ -14,7 +14,7 @@ See `memory-bank/plans/mvp-implementation-plan.md` and `.claude/plans/functional
 - Phase 5: Waitlist Automation — candidate finder, eligibility checker, weighted ranking, waitlist workflow, opening detection, operator settings UI, batch approval
 - Phase 6: Hardening — audit feed UI, communication service (provider stubs), feature flags, observability (logger, correlation context, metrics collector), proposal expiration cron, dashboard metrics
 
-### UI Wiring Session (latest)
+### UI Wiring Session
 - Wired ALL 7 mock React Query hooks to real API endpoints (removed ~1000 lines of mock data)
 - Created server-side mappers (proposal, prospect, audit) to transform DB rows → View types with FSP name resolution
 - Created new API endpoints: GET/PATCH /api/settings, POST /api/settings/reset, GET /api/audit, GET /api/dashboard/metrics, POST /api/proposals/batch/approve, POST /api/proposals/batch/decline
@@ -27,23 +27,33 @@ See `memory-bank/plans/mvp-implementation-plan.md` and `.claude/plans/functional
 - Proposals sort newest-first
 - await invalidateQueries so mutations hold loading state until data refreshes
 
+### Pre-Credentials Hardening (latest)
+- **Auto-approver feature**: Tool-calling AI agent (OpenAI gpt-4o) with 6 scheduling tools, async via Inngest, deterministic fallback, per-operator config (enabled toggle + confidence threshold)
+- **Seed script**: `pnpm db:seed` populates demo data for local development
+- **RealFspClient**: HTTP methods implemented (GET/POST/PUT/DELETE with auth headers), awaiting credentials to test
+- **Rate limiter**: 55 requests per 60 seconds for FSP API calls
+- **Snapshot persistence**: Moved from in-memory Map to database storage
+- **Empty/error states**: Added to all UI views
+
 ## Quality Gates
-- 518 tests passing across 43 test files
+- 551 tests passing across 47 test files
 - Zero typecheck errors, zero lint violations
 - All 4 workflows tested end-to-end against mock FSP data
 
 ## What's Next
-1. **FSP Real Integration** — waiting on dev credentials (subscription key, write API access, test operator). Message sent to FSP technical contact.
-2. **Auth** — currently mock mode only (middleware auto-injects operatorId: 1). Real auth TBD.
-3. **Communication providers** — email/SMS interfaces are stubbed, need Twilio/SendGrid wiring.
-4. **Snapshot persistence** — currently in-memory Map (lost on restart), needs durable store.
+1. **FSP Real Integration** — waiting on dev credentials (subscription key, write API access, test operator).
+2. **Real API testing** — validate RealFspClient against live FSP endpoints.
+3. **Auth** — currently mock mode only (middleware auto-injects operatorId: 1). Real auth TBD.
+4. **Communication providers** — email/SMS interfaces are stubbed, need Twilio/SendGrid wiring.
 5. **Deployment** — target Azure, no pipeline yet.
 
 ## Active Decisions
 - See decisions/0001-project-bootstrap.md for stack choices
 - See decisions/0002-technology-choices.md for technology selections
+- See decisions/0003-ui-backend-wiring.md for UI wiring architecture
+- See decisions/0004-autonomous-auto-approver.md for auto-approver design
 - Background jobs: Inngest (decided, replaces deferred status)
 
 ## Blockers
-- No FSP dev credentials — mock-first approach mitigates this. Request sent to FSP contact.
+- Waiting on FSP tech contact for: subscription key, write API access, test operator
 - FSP public developer API is READ-ONLY; write endpoints (reservation creation, AutoSchedule, Find-a-Time) require internal API access

@@ -112,6 +112,21 @@ The key insight: this is NOT a chatbot or autonomous scheduler. It's an operatio
 - **Why:** Dispatchers think in terms of their decision ("I approved it"), not the system's internal mechanics ("a reservation was created in FSP"). "Failed" is still shown separately for visibility.
 - **Tradeoff:** Internal status still tracks `executed` vs `approved` in the DB for debugging.
 
+### Tool-Calling Agent for Auto-Approval (not simple scorer)
+
+- **Chosen:** OpenAI gpt-4o as a tool-calling agent with 6 scheduling tools.
+- **Alternatives:** Simple weighted scorer (sum of heuristic signals), ReAct loop (agent reasons and acts in a loop with free-form tool use).
+- **Why:** A simple scorer can't handle nuanced cases (e.g., "this student failed their last checkride, so scheduling them with a different instructor might be better"). Tool-calling lets the agent gather exactly the information it needs, like a human dispatcher would. ReAct was rejected because it's harder to constrain and more expensive per evaluation.
+- **Tradeoff:** Requires OpenAI API key (~$0.01-0.03 per evaluation). Adds latency (2-5 seconds per evaluation). Deterministic fallback mitigates outage risk.
+- **Analogy:** A simple scorer is like a checklist ("slot available? yes. same instructor? yes. score: 8/10"). A tool-calling agent is like a dispatcher who can pull up any record they need before making a judgment call.
+
+### Async Auto-Approval via Inngest (not synchronous)
+
+- **Chosen:** Auto-approval runs asynchronously via Inngest after proposal creation.
+- **Alternatives:** Synchronous evaluation during proposal creation (block until agent finishes), polling from the client.
+- **Why:** Lower perceived latency. The proposal appears in the UI as "pending" immediately. The agent evaluates in the background and transitions the proposal to "approved" if confident. If we blocked on the agent, proposal creation would take 3-8 seconds instead of <1 second.
+- **Tradeoff:** There's a brief window where the proposal shows "pending" even though it will be auto-approved seconds later. The dispatcher might manually approve it before the agent finishes (harmless -- the agent checks status before acting).
+
 ### Await Query Invalidation in Mutations
 
 - **Chosen:** React Query mutations `await queryClient.invalidateQueries()` before resolving, so the button loading state persists until fresh data arrives.
@@ -282,6 +297,15 @@ Three components, all with singleton instances exported from `index.ts`:
 - **Key pattern:** The lookups are built once per request, not per row. So mapping 50 proposals still only makes 4 FSP calls.
 - **Example:** DB row has `{ studentId: "usr_123", locationId: 5 }` -> mapper resolves to `{ studentName: "John Smith", locationName: "KPAO - Palo Alto" }`.
 
+### Auto-Approver (`src/lib/engine/auto-approver/`)
+
+- **What:** A tool-calling AI agent that evaluates proposals and auto-approves them when confidence is high enough.
+- **How:** When a proposal is generated, if the operator has auto-approval enabled, an Inngest function fires asynchronously. The agent (OpenAI gpt-4o) receives the proposal context and has access to 6 scheduling tools it can call to gather information (check availability, verify instructor qualifications, look up student history, etc.). It reasons through the proposal step by step, calls tools as needed, and returns a confidence score. If the score exceeds the operator's configured threshold, the proposal is auto-approved. The proposal appears as "pending" in the UI immediately, then transitions to "approved" in the background once the agent finishes.
+- **Deterministic fallback:** If OpenAI is unavailable (API error, timeout, missing key), a rule-based scorer evaluates the proposal using the same criteria but without natural language reasoning. This ensures auto-approval never silently stops working.
+- **Per-operator config:** Each operator can toggle auto-approval on/off and set their own confidence threshold (e.g., 0.85 means only auto-approve when the agent is 85%+ confident).
+- **Example:** Proposal for rescheduling Student A to Tuesday 10am -> agent calls `checkAvailability` (slot is open), `getInstructorQualifications` (same instructor, qualified), `getStudentHistory` (student prefers mornings) -> confidence 0.92 -> exceeds threshold 0.85 -> auto-approved.
+- **Analogy:** Like a senior dispatcher reviewing proposals in the background. They have access to all the same information a human would check, and they only approve when they're confident enough. If they're unsure, the proposal stays in the queue for a human.
+
 ### Trigger Service (`src/lib/engine/trigger-service.ts`)
 
 - **What:** Creates, deduplicates, and dispatches scheduling triggers to the orchestrator.
@@ -302,15 +326,14 @@ Three components, all with singleton instances exported from `index.ts`:
 - **Race condition between validate and create** -- FSP uses a two-step API: validate reservation, then create reservation. Another user could book the same slot between these two calls. Inherent to FSP's API design; no solution without FSP-side locking.
 - **Public FSP developer API is read-only** -- write operations (creating reservations) require an internal access tier that hasn't been confirmed. The entire execution pipeline may need rework if the write API differs from documentation.
 - **Communication providers are stubs** -- email and SMS providers log to console instead of sending. Need actual integrations (SendGrid, Twilio, etc.).
-- **Schedule snapshot persistence is in-memory** -- the cancellation detector compares snapshots, but previous snapshots are lost on server restart. Needs persistent storage (DB or Redis).
 - **Auth is mock-only** -- middleware auto-injects a tenant context. No real authentication flow exists yet.
-- **No seed script for demo data** -- running the app locally shows an empty state. Need a seed script to populate proposals, prospects, and triggers for demos.
 - **In-memory metrics** -- MetricsCollector stores everything in memory. Restarting the server loses all metrics. Need to export to a real backend (Prometheus, Datadog, etc.) for production.
+- **Auto-approver cost** -- each evaluation costs ~$0.01-0.03 in OpenAI API fees. At scale (1,300 operators, multiple proposals/day), this could add up. Deterministic fallback exists but provides lower-quality evaluations.
 - **Waitlist ranking quality depends on signal quality** -- if FSP data about "time since last flight" is inaccurate or missing, ranking degrades. Will need iteration with real data.
 - **Timezone handling is tricky** -- FSP reservation create uses local time, AutoSchedule returns UTC, availability uses UTC with dayOfWeek. The `TimezoneResolver` defaults to UTC when no mapping is provided. Getting this wrong creates off-by-hours reservation bugs.
 - **No FSP webhooks confirmed** -- if FSP doesn't support real-time event streams, the cancellation detector relies on polling (snapshot comparison), which introduces latency.
 - **Single-threaded execution** -- ReservationExecutor processes actions sequentially within a proposal. For proposals with many actions, this could be slow.
-- **No rate limiting on FSP calls** -- the mock doesn't enforce rate limits, so we don't know how the system behaves under FSP's actual rate limits.
+- **Rate limiter is in-memory** -- the 55 req/60s rate limiter for FSP API calls uses an in-memory token bucket. In a multi-instance deployment, each instance tracks its own limits independently, so aggregate requests could exceed the real FSP rate limit.
 - **View mapper makes 4 FSP calls per request** -- every proposal list request fetches all locations, users, aircraft, and activity types to build lookup maps. No caching layer yet. Could be slow with a real FSP API.
 
 ---
@@ -319,9 +342,9 @@ Three components, all with singleton instances exported from `index.ts`:
 
 ### Test Coverage
 
-- **518 tests** across 43 test files, all passing.
-- **48 tasks** across 6 phases, all complete.
-- Coverage spans: orchestrator, all 4 workflows, waitlist ranking, cancellation detection, reservation execution, proposal lifecycle, FSP client mock, observability, error handling, retry logic, feature flags, communication service, and templates.
+- **551 tests** across 47 test files, all passing.
+- **48 tasks** across 6 phases, all complete, plus pre-credentials hardening work.
+- Coverage spans: orchestrator, all 4 workflows, waitlist ranking, cancellation detection, reservation execution, proposal lifecycle, FSP client mock, observability, error handling, retry logic, feature flags, communication service, templates, auto-approver, and rate limiter.
 
 ### Architecture Numbers
 
