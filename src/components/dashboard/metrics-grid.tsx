@@ -9,6 +9,8 @@ import {
   Zap,
   Activity,
   AlertCircle,
+  TrendingUp,
+  Timer,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,9 +24,10 @@ interface MetricCardProps {
   value: number;
   colorClass: string;
   href?: string;
+  displayValue?: string;
 }
 
-function MetricCard({ icon, label, value, colorClass, href }: MetricCardProps) {
+function MetricCard({ icon, label, value, colorClass, href, displayValue }: MetricCardProps) {
   const content = (
     <Card size="sm" className={href ? "transition-colors hover:border-foreground/20 hover:bg-accent/50" : ""}>
       <CardContent className="flex items-center gap-3">
@@ -33,7 +36,7 @@ function MetricCard({ icon, label, value, colorClass, href }: MetricCardProps) {
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-xs text-muted-foreground">{label}</p>
-          <p className="text-2xl font-semibold tabular-nums">{value}</p>
+          <p className="text-2xl font-semibold tabular-nums">{displayValue ?? value}</p>
         </div>
       </CardContent>
     </Card>
@@ -109,6 +112,20 @@ function getMetricCards(data: DashboardMetrics): MetricCardProps[] {
       colorClass: "bg-slate-100 dark:bg-slate-800/50",
       href: "/activity",
     },
+    {
+      icon: <TrendingUp className="size-5 text-green-600 dark:text-green-400" />,
+      label: "Acceptance Rate",
+      value: data.acceptanceRate ?? 0,
+      displayValue: data.acceptanceRate != null ? `${data.acceptanceRate}%` : "\u2014",
+      colorClass: "bg-green-100 dark:bg-green-900/30",
+    },
+    {
+      icon: <Timer className="size-5 text-blue-600 dark:text-blue-400" />,
+      label: "Avg Time to Fill",
+      value: data.avgTimeToFillHours ?? 0,
+      displayValue: data.avgTimeToFillHours != null ? `${data.avgTimeToFillHours}h` : "\u2014",
+      colorClass: "bg-blue-100 dark:bg-blue-900/30",
+    },
   ];
 }
 
@@ -130,7 +147,7 @@ export function MetricsGrid() {
   if (isLoading || !data) {
     return (
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {Array.from({ length: 7 }).map((_, i) => (
+        {Array.from({ length: 9 }).map((_, i) => (
           <MetricCardSkeleton key={i} />
         ))}
       </div>

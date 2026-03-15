@@ -10,6 +10,8 @@ export interface DashboardMetrics {
   activeWorkflows: number;
   recentActivity: number;
   autoApprovedToday: number;
+  acceptanceRate: number | null;
+  avgTimeToFillHours: number | null;
 }
 
 export interface RecentActivityItem {
