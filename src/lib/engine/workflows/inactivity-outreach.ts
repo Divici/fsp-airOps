@@ -1,7 +1,7 @@
 // ---------------------------------------------------------------------------
 // Inactivity Outreach Workflow Handler
-// Triggered by inactivity detection — finds the student's next lesson and
-// proposes available slots, prioritizing soonest + instructor continuity.
+// Triggered when a student has not flown recently — finds slots, ranks them
+// with AI, and generates a personalized outreach message.
 // ---------------------------------------------------------------------------
 
 import type { IFspClient } from "@/lib/fsp-client";
@@ -13,11 +13,14 @@ import type {
 } from "@/lib/types/workflow";
 import { FindATimeAdapter } from "../scheduling/find-a-time-adapter";
 import { rankSlots } from "../scheduling/slot-ranker";
-import { NextLessonResolver } from "../training/next-lesson-resolver";
+import { rankSlotsWithAI, type StudentHistory } from "@/lib/ai/slot-ranker";
+import { generateOutreachMessage } from "@/lib/ai/outreach-message-generator";
 import type { InactivityOutreachContext } from "./inactivity-outreach.types";
 
 export class InactivityOutreachWorkflowHandler implements WorkflowHandler {
-  type = "inactivity_outreach" as const;
+  // Using "next_lesson" as the closest existing WorkflowType — inactivity
+  // outreach is effectively proposing the next lesson for an inactive student.
+  type = "next_lesson" as const;
 
   constructor(private fspClient: IFspClient) {}
 
@@ -28,128 +31,67 @@ export class InactivityOutreachWorkflowHandler implements WorkflowHandler {
     if (!triggerContext) {
       return {
         proposedActions: [],
-        summary: "No inactivity context provided",
+        summary: "No inactivity outreach context provided",
         rawData: { error: "missing_context" },
       };
     }
 
-    // 1. Resolve the next lesson from the student's enrollment
-    const resolver = new NextLessonResolver(this.fspClient);
-
-    // Try to find any active enrollment for this student
-    const enrollments = await this.fspClient.getEnrollments(
-      context.operatorId,
-      triggerContext.studentId,
-    );
-
-    const activeEnrollment = enrollments.find(
-      (e) => e.status === "Active" || e.status === "active",
-    );
-
-    if (!activeEnrollment) {
-      return {
-        proposedActions: [],
-        summary: `No active enrollment found for ${triggerContext.studentName}`,
-        rawData: {
-          triggerContext,
-          reason: "no_active_enrollment",
-        },
-      };
-    }
-
-    const nextLesson = await resolver.getNextLesson(
-      context.operatorId,
-      triggerContext.studentId,
-      activeEnrollment.enrollmentId,
-    );
-
-    if (!nextLesson) {
-      return {
-        proposedActions: [],
-        summary: `No next lesson available for ${triggerContext.studentName}`,
-        rawData: {
-          triggerContext,
-          reason: "no_next_lesson",
-        },
-      };
-    }
-
-    const { nextEvent } = nextLesson;
-
-    // 2. Build search window
+    // 1. Build search window
     const searchStartDate = this.formatDate(new Date());
     const searchEndDate = this.formatDate(
       this.addDays(new Date(), context.settings.searchWindowDays),
     );
 
-    // 3. Find available slots via FSP
+    // 2. Find available slots via FSP
     const adapter = new FindATimeAdapter(this.fspClient);
     const slots = await adapter.findSlots({
       operatorId: context.operatorId,
-      activityTypeId: nextEvent.activityTypeId,
-      instructorIds:
-        nextEvent.instructorIds.length > 0
-          ? nextEvent.instructorIds
-          : undefined,
-      aircraftIds:
-        nextEvent.aircraftIds.length > 0 ? nextEvent.aircraftIds : undefined,
-      schedulingGroupIds:
-        nextEvent.schedulingGroupIds.length > 0
-          ? nextEvent.schedulingGroupIds
-          : undefined,
+      activityTypeId: triggerContext.nextLessonType ?? "flight_training",
+      instructorIds: triggerContext.lastInstructorId
+        ? [triggerContext.lastInstructorId]
+        : undefined,
       customerId: triggerContext.studentId,
       startDate: searchStartDate,
       endDate: searchEndDate,
-      duration: nextEvent.durationTotal,
+      duration: 60, // Default 1-hour lesson
     });
 
     if (slots.length === 0) {
       return {
         proposedActions: [],
-        summary: `No available slots found for ${triggerContext.studentName}'s next lesson (${nextEvent.lessonName})`,
+        summary: `No available slots found for inactive student ${triggerContext.studentName}`,
         rawData: {
           triggerContext,
-          nextEvent,
           slotsFound: 0,
+          slotsRanked: 0,
         },
       };
     }
 
-    // 4. Deterministic ranking: soonest available + instructor continuity
-    //    (AI ranker will be added in Phase C)
-    const ranked = rankSlots(slots, {
+    // 3. Deterministic ranking first
+    let ranked = rankSlots(slots, {
       preferSameInstructor: context.settings.preferSameInstructor,
       preferSameInstructorWeight: context.settings.preferSameInstructorWeight,
+      preferredInstructorId: triggerContext.lastInstructorId,
       preferSameAircraft: context.settings.preferSameAircraft,
       preferSameAircraftWeight: context.settings.preferSameAircraftWeight,
     });
 
+    // 4. AI re-ranking (if OpenAI key is configured)
+    const studentHistory: StudentHistory = {
+      studentId: triggerContext.studentId,
+      studentName: triggerContext.studentName,
+      recentBookings: triggerContext.recentBookings ?? [],
+      preferredInstructorId: triggerContext.lastInstructorId,
+      daysSinceLastFlight: triggerContext.daysSinceLastFlight,
+    };
+
+    ranked = await rankSlotsWithAI(ranked, studentHistory);
+
     // 5. Take top N from operator settings
     const topN = ranked.slice(0, context.settings.topNAlternatives);
 
-    // 6. Build the inactivity-specific rationale
-    const daysLabel = triggerContext.daysSinceLastFlight
-      ? `${triggerContext.daysSinceLastFlight} days`
-      : "an extended period";
-    const topSlot = topN[0];
-    const slotDate = topSlot.startTime.toLocaleDateString("en-US", {
-      weekday: "long",
-      month: "long",
-      day: "numeric",
-    });
-    const slotTime = topSlot.startTime.toLocaleTimeString("en-US", {
-      hour: "numeric",
-      minute: "2-digit",
-    });
-
-    const rationale =
-      `${triggerContext.studentName} has not flown in ${daysLabel}. ` +
-      `Their next lesson is ${nextEvent.courseName} — ${nextEvent.lessonName}. ` +
-      `A slot is available on ${slotDate} at ${slotTime}` +
-      (topSlot.instructorId ? ` with instructor ${topSlot.instructorId}` : "") +
-      `.`;
-
-    // 7. Map to proposal actions
+    // 6. Map to proposal actions
     const proposedActions: ProposalActionInput[] = topN.map((slot, i) => ({
       rank: i + 1,
       actionType: "create_reservation" as const,
@@ -159,28 +101,36 @@ export class InactivityOutreachWorkflowHandler implements WorkflowHandler {
       studentId: triggerContext.studentId,
       instructorId: slot.instructorId,
       aircraftId: slot.aircraftId,
-      activityTypeId: nextEvent.activityTypeId,
-      trainingContext: {
-        enrollmentId: activeEnrollment.enrollmentId,
-        lessonId: nextEvent.lessonId,
-        lessonName: nextEvent.lessonName,
-        lessonOrder: nextEvent.lessonOrder,
-        courseName: nextEvent.courseName,
-        inactivityOutreach: true,
-        daysSinceLastFlight: triggerContext.daysSinceLastFlight,
-      },
-      explanation: i === 0 ? rationale : undefined,
     }));
+
+    // 7. Generate personalized outreach message for the top slot
+    const topSlot = topN[0];
+    const outreachMessage = await generateOutreachMessage({
+      studentName: triggerContext.studentName,
+      daysSinceLastFlight: triggerContext.daysSinceLastFlight,
+      nextLessonType: triggerContext.nextLessonType ?? "Training Flight",
+      proposedDate: topSlot.startTime.toLocaleDateString("en-US", {
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+      }),
+      proposedTime: topSlot.startTime.toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+      }),
+      instructorName: topSlot.instructorId ?? "an available instructor",
+      operatorName: `Operator ${context.operatorId}`,
+    });
 
     return {
       proposedActions,
-      summary: rationale,
+      summary: `Found ${proposedActions.length} slots for inactive student ${triggerContext.studentName} (${triggerContext.daysSinceLastFlight} days since last flight)`,
       rawData: {
         triggerContext,
-        nextEvent,
-        enrollmentId: activeEnrollment.enrollmentId,
         slotsFound: slots.length,
         slotsRanked: ranked.length,
+        outreachMessage,
+        aiRankingApplied: !!process.env.OPENAI_API_KEY,
       },
     };
   }

@@ -1,13 +1,18 @@
 // ---------------------------------------------------------------------------
-// Inactivity Outreach Workflow Types
+// Inactivity Outreach Workflow — Trigger context types
 // ---------------------------------------------------------------------------
 
-/** Context shape stored in the trigger for inactivity outreach workflows. */
 export interface InactivityOutreachContext {
   studentId: string;
   studentName: string;
-  email: string;
-  lastFlightDate: string | null;
-  daysSinceLastFlight: number | null;
+  daysSinceLastFlight: number;
+  lastInstructorId?: string;
   enrollmentId?: string;
+  nextLessonType?: string;
+  /** Recent booking patterns for AI slot ranking. */
+  recentBookings?: Array<{
+    dayOfWeek: string;
+    timeOfDay: string;
+    instructorId: string;
+  }>;
 }
