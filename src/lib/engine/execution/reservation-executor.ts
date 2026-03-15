@@ -30,6 +30,12 @@ const DEFAULT_TZ_RESOLVER: TimezoneResolver = () => "UTC";
 export interface ReservationExecutorOptions {
   /** Maps locationId → IANA timezone (e.g. "America/Los_Angeles") */
   timezoneResolver?: TimezoneResolver;
+  /** Enable batch reservation creation when a proposal has multiple actions. */
+  batchMode?: boolean;
+  /** Polling interval in ms when waiting for batch status (default: 1000). */
+  batchPollIntervalMs?: number;
+  /** Max number of polls before giving up on batch status (default: 30). */
+  batchMaxPolls?: number;
 }
 
 /**
@@ -46,6 +52,9 @@ export interface ReservationExecutorOptions {
 export class ReservationExecutor {
   private freshnessChecker: FreshnessChecker;
   private timezoneResolver: TimezoneResolver;
+  private batchMode: boolean;
+  private batchPollIntervalMs: number;
+  private batchMaxPolls: number;
 
   constructor(
     private db: PostgresJsDatabase,
@@ -55,6 +64,9 @@ export class ReservationExecutor {
   ) {
     this.freshnessChecker = new FreshnessChecker(fspClient);
     this.timezoneResolver = options.timezoneResolver ?? DEFAULT_TZ_RESOLVER;
+    this.batchMode = options.batchMode ?? false;
+    this.batchPollIntervalMs = options.batchPollIntervalMs ?? 1000;
+    this.batchMaxPolls = options.batchMaxPolls ?? 30;
   }
 
   // -------------------------------------------------------------------------
@@ -74,11 +86,16 @@ export class ReservationExecutor {
     // 2. Verify the proposal is approved (only approved → executed/failed is valid)
     assertTransition(proposal.status!, "executed");
 
-    // 3. Execute each action sequentially
-    const results: ExecutionResult[] = [];
-    for (const action of proposal.actions) {
-      const result = await this.executeAction(operatorId, action);
-      results.push(result);
+    // 3. Execute actions — batch mode when multiple actions and batch is enabled
+    let results: ExecutionResult[];
+    if (this.batchMode && proposal.actions.length > 1) {
+      results = await this.executeBatch(operatorId, proposal.actions);
+    } else {
+      results = [];
+      for (const action of proposal.actions) {
+        const result = await this.executeAction(operatorId, action);
+        results.push(result);
+      }
     }
 
     // 4. Determine aggregate outcome
@@ -92,6 +109,126 @@ export class ReservationExecutor {
       results,
       errors: results.filter((r) => !r.success).map((r) => r.error!),
     };
+  }
+
+  // -------------------------------------------------------------------------
+  // Private — Batch execution pipeline
+  // -------------------------------------------------------------------------
+
+  private async executeBatch(
+    operatorId: number,
+    actions: ProposalAction[]
+  ): Promise<ExecutionResult[]> {
+    try {
+      // Pre-validate all actions with freshness checks
+      const payloads: FspReservationCreate[] = [];
+      for (const action of actions) {
+        const freshness = await this.freshnessChecker.checkSlotAvailable({
+          operatorId,
+          startTime: action.startTime,
+          endTime: action.endTime,
+          instructorId: action.instructorId,
+          aircraftId: action.aircraftId,
+          locationId: action.locationId,
+        });
+
+        if (!freshness.available) {
+          // If any action is stale, fall back to sequential execution
+          const results: ExecutionResult[] = [];
+          for (const a of actions) {
+            results.push(await this.executeAction(operatorId, a));
+          }
+          return results;
+        }
+
+        payloads.push(this.buildReservationPayload(operatorId, action));
+      }
+
+      // Submit batch
+      const batchResponse = await this.fspClient.batchCreateReservations(
+        operatorId,
+        payloads
+      );
+
+      // Poll for completion
+      let status = await this.fspClient.getBatchStatus(
+        operatorId,
+        batchResponse.batchId
+      );
+      let polls = 0;
+
+      while (
+        (status.status === "pending" || status.status === "processing") &&
+        polls < this.batchMaxPolls
+      ) {
+        await this.delay(this.batchPollIntervalMs);
+        status = await this.fspClient.getBatchStatus(
+          operatorId,
+          batchResponse.batchId
+        );
+        polls++;
+      }
+
+      // Map results to ExecutionResult[]
+      const results: ExecutionResult[] = actions.map((action, i) => {
+        const batchResult = status.results[i];
+        if (batchResult?.error) {
+          return {
+            actionId: action.id,
+            success: false,
+            error: batchResult.error,
+          };
+        }
+        return {
+          actionId: action.id,
+          success: true,
+          fspReservationId: batchResult?.reservationId?.toString(),
+        };
+      });
+
+      // Update action statuses
+      for (let i = 0; i < actions.length; i++) {
+        const result = results[i];
+        if (result.success) {
+          await updateActionExecutionStatus(this.db, operatorId, actions[i].id, {
+            validationStatus: "valid",
+          });
+          await updateActionExecutionStatus(this.db, operatorId, actions[i].id, {
+            executionStatus: "created",
+            fspReservationId: result.fspReservationId,
+          });
+          await this.auditService.logReservationCreated(
+            operatorId,
+            actions[i].id,
+            result.fspReservationId!
+          );
+        } else {
+          await updateActionExecutionStatus(this.db, operatorId, actions[i].id, {
+            executionStatus: "failed",
+            executionError: result.error,
+          });
+          await this.auditService.logReservationFailed(
+            operatorId,
+            actions[i].id,
+            result.error!
+          );
+        }
+      }
+
+      return results;
+    } catch {
+      // Batch failed entirely — fall back to sequential
+      const results: ExecutionResult[] = [];
+      for (const action of actions) {
+        results.push(await this.executeAction(operatorId, action));
+      }
+      return results;
+    }
+  }
+
+  /** Simple delay helper for polling. */
+  private delay(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   // -------------------------------------------------------------------------

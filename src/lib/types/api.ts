@@ -73,6 +73,21 @@ export const updateOperatorSettingsSchema = z.object({
       sms: z.boolean().optional(),
     })
     .optional(),
+  customWeights: z
+    .array(
+      z.object({
+        name: z.string().min(1),
+        signal: z.enum([
+          "daysSinceLastFlight",
+          "daysUntilExpiry",
+          "totalHours",
+          "lessonCompletionRate",
+        ]),
+        weight: z.number().min(0).max(10),
+        enabled: z.boolean(),
+      }),
+    )
+    .optional(),
   autoApprovalEnabled: z.boolean().optional(),
   autoApprovalThreshold: z.number().min(0.5).max(0.95).optional(),
 });

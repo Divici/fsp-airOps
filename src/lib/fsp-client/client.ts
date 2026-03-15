@@ -31,6 +31,8 @@ import type {
   ScheduleQueryParams,
   SchedulableEventsParams,
   ReservationListParams,
+  BatchReservationResponse,
+  BatchStatusResponse,
 } from "./types";
 import { RateLimiter } from "./rate-limiter";
 
@@ -347,6 +349,34 @@ export class RealFspClient implements IFspClient {
     );
 
     return response.results;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Batch Reservations
+  // ---------------------------------------------------------------------------
+
+  async batchCreateReservations(
+    operatorId: number,
+    reservations: FspReservationCreate[],
+  ): Promise<BatchReservationResponse> {
+    return this.fspFetch<BatchReservationResponse>(
+      this.env.FSP_API_BASE_URL!,
+      `/operators/${operatorId}/batchReservations`,
+      {
+        method: "POST",
+        body: JSON.stringify({ reservations }),
+      },
+    );
+  }
+
+  async getBatchStatus(
+    _operatorId: number,
+    batchId: string,
+  ): Promise<BatchStatusResponse> {
+    return this.fspFetch<BatchStatusResponse>(
+      this.env.FSP_API_BASE_URL!,
+      `/batchReservations/status/${batchId}`,
+    );
   }
 
   // ---------------------------------------------------------------------------

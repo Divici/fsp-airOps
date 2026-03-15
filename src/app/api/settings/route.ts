@@ -31,6 +31,7 @@ function toSettingsResponse(s: OperatorSettings) {
     daylightOnly: s.daylightOnly,
     enabledWorkflows: s.enabledWorkflows,
     communicationPreferences: s.communicationPreferences,
+    customWeights: s.customWeights,
     autoApprovalEnabled: s.autoApprovalEnabled,
     autoApprovalThreshold: s.autoApprovalThreshold,
   };

@@ -395,6 +395,81 @@ describe("MockFspClient", () => {
     });
   });
 
+  // ---- Batch Reservations -------------------------------------------------
+
+  describe("batchCreateReservations", () => {
+    it("returns a batchId and completed status", async () => {
+      const reservations = [
+        {
+          operatorId: 1,
+          locationId: 1,
+          aircraftId: "ac-1",
+          activityTypeId: "at-1",
+          pilotId: "stu-aaa-1111",
+          start: "2026-03-23T08:00:00",
+          end: "2026-03-23T10:00:00",
+        },
+        {
+          operatorId: 1,
+          locationId: 1,
+          aircraftId: "ac-2",
+          activityTypeId: "at-1",
+          pilotId: "stu-bbb-2222",
+          start: "2026-03-23T10:00:00",
+          end: "2026-03-23T12:00:00",
+        },
+      ];
+
+      const result = await client.batchCreateReservations(operatorId, reservations);
+      expect(result.batchId).toBeTruthy();
+      expect(result.status).toBe("completed");
+    });
+
+    it("adds all reservations to internal state", async () => {
+      const before = await client.listReservations(operatorId, {
+        start: "2026-03-01",
+        end: "2026-03-31",
+      });
+      const beforeCount = before.length;
+
+      await client.batchCreateReservations(operatorId, [
+        {
+          operatorId: 1,
+          locationId: 1,
+          aircraftId: "ac-1",
+          activityTypeId: "at-1",
+          pilotId: "stu-aaa-1111",
+          start: "2026-03-23T08:00:00",
+          end: "2026-03-23T10:00:00",
+        },
+        {
+          operatorId: 1,
+          locationId: 1,
+          aircraftId: "ac-2",
+          activityTypeId: "at-1",
+          pilotId: "stu-bbb-2222",
+          start: "2026-03-23T10:00:00",
+          end: "2026-03-23T12:00:00",
+        },
+      ]);
+
+      const after = await client.listReservations(operatorId, {
+        start: "2026-03-01",
+        end: "2026-03-31",
+      });
+      expect(after.length).toBe(beforeCount + 2);
+    });
+  });
+
+  describe("getBatchStatus", () => {
+    it("returns completed status for any batchId", async () => {
+      const status = await client.getBatchStatus(operatorId, "batch-123");
+      expect(status.batchId).toBe("batch-123");
+      expect(status.status).toBe("completed");
+      expect(Array.isArray(status.results)).toBe(true);
+    });
+  });
+
   // ---- Environment --------------------------------------------------------
 
   describe("getCivilTwilight", () => {
