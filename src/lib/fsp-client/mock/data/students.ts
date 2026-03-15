@@ -3,10 +3,10 @@ import type { FspUser } from "@/lib/types/fsp";
 export const mockStudents: FspUser[] = [
   {
     id: "stu-aaa-1111",
-    firstName: "Alex",
-    lastName: "Rivera",
-    fullName: "Alex Rivera",
-    email: "alex.rivera@example.com",
+    firstName: "Dave",
+    lastName: "AIhe",
+    fullName: "Dave AIhe",
+    email: "doa9200@gmail.com",
     role: "Student",
     isActive: true,
     imageUrl: "",

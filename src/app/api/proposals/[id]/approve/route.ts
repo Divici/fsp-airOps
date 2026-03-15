@@ -107,11 +107,16 @@ export async function POST(
         }
       }
 
-      // Resolve student contact info for notifications
+      // Resolve contact info and display names for notifications
       let studentEmail: string | undefined;
       let studentName: string | undefined;
+      let instructorName: string | undefined;
+      let aircraftTail: string | undefined;
+      let locationName: string | undefined;
       try {
         const fsp = createFspClient();
+        const firstAction = proposal.actions[0];
+
         const users = await fsp.getUsers(tenant.operatorId);
         const studentId = proposal.affectedStudentIds?.[0];
         if (studentId) {
@@ -121,8 +126,26 @@ export async function POST(
             studentName = student.fullName || `${student.firstName} ${student.lastName}`;
           }
         }
+
+        if (firstAction?.instructorId) {
+          const instructors = await fsp.getInstructors(tenant.operatorId);
+          const inst = instructors.find((i) => i.id === firstAction.instructorId);
+          if (inst) instructorName = inst.fullName;
+        }
+
+        if (firstAction?.aircraftId) {
+          const aircraft = await fsp.getAircraft(tenant.operatorId);
+          const ac = aircraft.find((a) => a.id === firstAction.aircraftId);
+          if (ac) aircraftTail = `${ac.registration} (${ac.makeModel})`;
+        }
+
+        if (firstAction?.locationId) {
+          const locations = await fsp.getLocations(tenant.operatorId);
+          const loc = locations.find((l) => l.id === String(firstAction.locationId));
+          if (loc) locationName = loc.name;
+        }
       } catch {
-        // Non-critical — proceed without contact info
+        // Non-critical — proceed without resolved names
       }
 
       // Fire-and-forget notification — don't block the response
@@ -133,6 +156,9 @@ export async function POST(
         executionSuccess: executionResult.success,
         studentEmail,
         studentName,
+        instructorName,
+        aircraftTail,
+        locationName,
       }).catch(() => {
         // Swallowed intentionally — notification failure is non-critical
       });

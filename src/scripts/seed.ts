@@ -41,31 +41,31 @@ const OPERATOR_ID = 1;
 
 // Fixed UUIDs for predictability
 const TRIGGER_IDS = {
-  t1: "00000000-0000-0000-0000-000000000e01",
-  t2: "00000000-0000-0000-0000-000000000e02",
-  t3: "00000000-0000-0000-0000-000000000e03",
-  t4: "00000000-0000-0000-0000-000000000e04",
-  t5: "00000000-0000-0000-0000-000000000e05",
+  t1: "10000000-0000-4000-a000-000000000e01",
+  t2: "10000000-0000-4000-a000-000000000e02",
+  t3: "10000000-0000-4000-a000-000000000e03",
+  t4: "10000000-0000-4000-a000-000000000e04",
+  t5: "10000000-0000-4000-a000-000000000e05",
 } as const;
 
 const PROPOSAL_IDS = {
-  p1: "00000000-0000-0000-0000-0000000000b1",
-  p2: "00000000-0000-0000-0000-0000000000b2",
-  p3: "00000000-0000-0000-0000-0000000000b3",
-  p4: "00000000-0000-0000-0000-0000000000b4",
-  p5: "00000000-0000-0000-0000-0000000000b5",
+  p1: "20000000-0000-4000-a000-0000000000b1",
+  p2: "20000000-0000-4000-a000-0000000000b2",
+  p3: "20000000-0000-4000-a000-0000000000b3",
+  p4: "20000000-0000-4000-a000-0000000000b4",
+  p5: "20000000-0000-4000-a000-0000000000b5",
 } as const;
 
 const PROSPECT_IDS = {
-  pr1: "00000000-0000-0000-0000-0000000000c1",
-  pr2: "00000000-0000-0000-0000-0000000000c2",
-  pr3: "00000000-0000-0000-0000-0000000000c3",
+  pr1: "30000000-0000-4000-a000-0000000000c1",
+  pr2: "30000000-0000-4000-a000-0000000000c2",
+  pr3: "30000000-0000-4000-a000-0000000000c3",
 } as const;
 
 const APPROVAL_IDS = {
-  a1: "00000000-0000-0000-0000-0000000000a1",
-  a2: "00000000-0000-0000-0000-0000000000a2",
-  a3: "00000000-0000-0000-0000-0000000000a3",
+  a1: "40000000-0000-4000-a000-0000000000a1",
+  a2: "40000000-0000-4000-a000-0000000000a2",
+  a3: "40000000-0000-4000-a000-0000000000a3",
 } as const;
 
 // Mock entity IDs
@@ -231,9 +231,9 @@ async function seed() {
       status: "pending",
       priority: 80,
       summary:
-        `Reschedule Alex's Stage 3 checkride prep to ${dayName(p1RescheduleDate)} morning with the same instructor`,
+        `Reschedule Dave's Stage 3 checkride prep to ${dayName(p1RescheduleDate)} morning with the same instructor`,
       rationale:
-        `Alex has not flown in 6 days and the checkride is next week. ${dayName(p1RescheduleDate)} 9 AM slot with Instructor Mike is open and keeps continuity.`,
+        `Dave has not flown in 6 days and the checkride is next week. ${dayName(p1RescheduleDate)} 9 AM slot with Instructor Mike is open and keeps continuity.`,
       affectedStudentIds: [STUDENTS.s1],
       affectedReservationIds: ["res-100"],
       affectedResourceIds: [INSTRUCTORS.i1, AIRCRAFT.a1],
@@ -292,7 +292,7 @@ async function seed() {
       status: "executed",
       priority: 80,
       summary:
-        "Auto-approved: reschedule Alex's pattern work to a different aircraft",
+        "Auto-approved: reschedule Dave's pattern work to a different aircraft",
       rationale:
         "N12345 is down for maintenance. N67890 (same model) is available at the same time. Same instructor, same lesson — low risk swap.",
       affectedStudentIds: [STUDENTS.s1],

@@ -24,6 +24,10 @@ export interface ApprovalNotificationParams {
   operatorName?: string;
   /** Whether execution succeeded — determines which template to use */
   executionSuccess: boolean;
+  /** Resolved display names for instructor/aircraft/location */
+  instructorName?: string;
+  aircraftTail?: string;
+  locationName?: string;
 }
 
 /**
@@ -43,6 +47,9 @@ export async function sendApprovalNotification(
     studentPhone,
     operatorName = "Your Flight School",
     executionSuccess,
+    instructorName: resolvedInstructor,
+    aircraftTail: resolvedAircraft,
+    locationName: resolvedLocation,
   } = params;
 
   try {
@@ -72,10 +79,10 @@ export async function sendApprovalNotification(
       time: firstAction
         ? new Date(firstAction.startTime).toLocaleTimeString()
         : "TBD",
-      location: firstAction ? String(firstAction.locationId) : "TBD",
+      location: resolvedLocation ?? (firstAction ? String(firstAction.locationId) : "TBD"),
       reservationId: firstAction?.fspReservationId ?? proposal.id,
-      instructorName: firstAction?.instructorId ?? "TBD",
-      aircraftTail: firstAction?.aircraftId ?? "TBD",
+      instructorName: resolvedInstructor ?? firstAction?.instructorId ?? "TBD",
+      aircraftTail: resolvedAircraft ?? firstAction?.aircraftId ?? "TBD",
     };
 
     const rendered = renderTemplate(template, variables);
