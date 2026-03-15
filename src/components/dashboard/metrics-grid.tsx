@@ -8,8 +8,10 @@ import {
   PlayCircle,
   Zap,
   Activity,
+  AlertCircle,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDashboardMetrics } from "@/lib/hooks/use-dashboard-metrics";
 import type { DashboardMetrics } from "@/lib/types/dashboard-metrics";
@@ -111,7 +113,19 @@ function getMetricCards(data: DashboardMetrics): MetricCardProps[] {
 }
 
 export function MetricsGrid() {
-  const { data, isLoading } = useDashboardMetrics();
+  const { data, isLoading, isError, refetch } = useDashboardMetrics();
+
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed p-8">
+        <AlertCircle className="size-8 text-destructive opacity-60" />
+        <p className="text-sm font-medium">Unable to load dashboard metrics</p>
+        <Button variant="outline" size="sm" onClick={() => refetch()}>
+          Try again
+        </Button>
+      </div>
+    );
+  }
 
   if (isLoading || !data) {
     return (

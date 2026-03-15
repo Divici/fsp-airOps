@@ -16,7 +16,7 @@ function DiscoveryQueueInner({
   title,
 }: DiscoveryQueueProps) {
   const filters = useProspectFilters(defaultStatus);
-  const { data, isLoading, isError } = useProspects(filters);
+  const { data, isLoading, isError, refetch } = useProspects(filters);
 
   const hasActiveFilters = filters.status !== defaultStatus;
 
@@ -36,6 +36,7 @@ function DiscoveryQueueInner({
         isLoading={isLoading}
         isError={isError}
         hasActiveFilters={hasActiveFilters}
+        onRetry={() => refetch()}
       />
     </div>
   );

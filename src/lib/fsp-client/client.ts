@@ -32,10 +32,12 @@ import type {
   SchedulableEventsParams,
   ReservationListParams,
 } from "./types";
+import { RateLimiter } from "./rate-limiter";
 
 export class RealFspClient implements IFspClient {
   private env: Env;
   private token: string | null = null;
+  private rateLimiter = new RateLimiter();
 
   constructor(env: Env) {
     this.env = env;
@@ -50,6 +52,8 @@ export class RealFspClient implements IFspClient {
     path: string,
     init?: RequestInit,
   ): Promise<T> {
+    await this.rateLimiter.acquire();
+
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
       "x-subscription-key": this.env.FSP_SUBSCRIPTION_KEY!,

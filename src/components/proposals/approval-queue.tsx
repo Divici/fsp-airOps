@@ -15,7 +15,7 @@ interface ApprovalQueueProps {
 
 function ApprovalQueueInner({ defaultStatus = "pending", title }: ApprovalQueueProps) {
   const filters = useProposalFilters(defaultStatus);
-  const { data, isLoading, isError } = useProposals(filters);
+  const { data, isLoading, isError, refetch } = useProposals(filters);
   const batch = useBatchApproval();
 
   const hasActiveFilters =
@@ -72,6 +72,7 @@ function ApprovalQueueInner({ defaultStatus = "pending", title }: ApprovalQueueP
         selectionMode={selectionMode}
         selectedIds={batch.selectedIds}
         onToggleSelect={batch.toggleSelect}
+        onRetry={() => refetch()}
       />
     </div>
   );

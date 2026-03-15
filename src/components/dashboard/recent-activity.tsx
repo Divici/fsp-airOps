@@ -7,11 +7,14 @@ import {
   CheckCircle,
   XCircle,
   AlertTriangle,
+  AlertCircle,
   Zap,
   Brain,
   Shield,
+  Inbox,
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRecentActivity } from "@/lib/hooks/use-dashboard-metrics";
 import type { RecentActivityItem } from "@/lib/types/dashboard-metrics";
@@ -60,7 +63,7 @@ function ActivitySkeleton() {
 }
 
 export function RecentActivity() {
-  const { data, isLoading } = useRecentActivity();
+  const { data, isLoading, isError, refetch } = useRecentActivity();
 
   return (
     <Card>
@@ -68,16 +71,29 @@ export function RecentActivity() {
         <CardTitle>Recent Activity</CardTitle>
       </CardHeader>
       <CardContent>
-        {isLoading || !data ? (
+        {isError ? (
+          <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed p-8">
+            <AlertCircle className="size-8 text-destructive opacity-60" />
+            <p className="text-sm font-medium">Unable to load recent activity</p>
+            <Button variant="outline" size="sm" onClick={() => refetch()}>
+              Try again
+            </Button>
+          </div>
+        ) : isLoading || !data ? (
           <div className="divide-y">
             {Array.from({ length: 5 }).map((_, i) => (
               <ActivitySkeleton key={i} />
             ))}
           </div>
         ) : data.length === 0 ? (
-          <p className="py-4 text-center text-sm text-muted-foreground">
-            No recent activity
-          </p>
+          <div className="flex flex-col items-center gap-2 py-8 text-muted-foreground">
+            <Inbox className="size-8 opacity-40" />
+            <p className="text-sm font-medium">No recent activity</p>
+            <p className="max-w-xs text-center text-xs">
+              Events will appear here as the system processes scheduling
+              triggers.
+            </p>
+          </div>
         ) : (
           <div className="divide-y">
             {data.slice(0, 5).map((item) => (

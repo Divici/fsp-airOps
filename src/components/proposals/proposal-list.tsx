@@ -1,6 +1,7 @@
 "use client";
 
 import { FileText, AlertCircle, Inbox } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProposalCard } from "./proposal-card";
 import type { ProposalView } from "@/lib/types/proposal-view";
@@ -13,6 +14,7 @@ interface ProposalListProps {
   selectionMode?: boolean;
   selectedIds?: Set<string>;
   onToggleSelect?: (id: string) => void;
+  onRetry?: () => void;
 }
 
 export function ProposalList({
@@ -23,6 +25,7 @@ export function ProposalList({
   selectionMode,
   selectedIds,
   onToggleSelect,
+  onRetry,
 }: ProposalListProps) {
   if (isLoading) {
     return <ProposalListSkeleton />;
@@ -36,6 +39,11 @@ export function ProposalList({
         <p className="text-xs text-muted-foreground">
           Please try refreshing the page.
         </p>
+        {onRetry && (
+          <Button variant="outline" size="sm" onClick={onRetry}>
+            Try again
+          </Button>
+        )}
       </div>
     );
   }

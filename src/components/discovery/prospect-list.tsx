@@ -1,6 +1,7 @@
 "use client";
 
 import { Plane, AlertCircle, Inbox } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProspectCard } from "./prospect-card";
 import type { ProspectView } from "@/lib/types/prospect-view";
@@ -10,6 +11,7 @@ interface ProspectListProps {
   isLoading: boolean;
   isError: boolean;
   hasActiveFilters: boolean;
+  onRetry?: () => void;
 }
 
 export function ProspectList({
@@ -17,6 +19,7 @@ export function ProspectList({
   isLoading,
   isError,
   hasActiveFilters,
+  onRetry,
 }: ProspectListProps) {
   if (isLoading) {
     return <ProspectListSkeleton />;
@@ -30,6 +33,11 @@ export function ProspectList({
         <p className="text-xs text-muted-foreground">
           Please try refreshing the page.
         </p>
+        {onRetry && (
+          <Button variant="outline" size="sm" onClick={onRetry}>
+            Try again
+          </Button>
+        )}
       </div>
     );
   }
@@ -47,10 +55,12 @@ export function ProspectList({
           </>
         ) : (
           <>
-            <Inbox className="size-8 opacity-40" />
-            <p className="text-sm font-medium">No discovery flight requests</p>
+            <Plane className="size-8 opacity-40" />
+            <p className="text-sm font-medium">
+              No discovery flight requests yet
+            </p>
             <p className="max-w-sm text-center text-xs">
-              New prospect inquiries will appear here when they are submitted.
+              Prospects can submit requests via the intake form at /book/1
             </p>
           </>
         )}
