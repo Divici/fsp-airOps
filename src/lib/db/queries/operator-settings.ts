@@ -29,6 +29,7 @@ export async function getOperatorSettings(
     communicationPreferences: {
       ...DEFAULT_OPERATOR_SETTINGS.communicationPreferences,
     },
+    communicationTemplates: DEFAULT_OPERATOR_SETTINGS.communicationTemplates,
     createdAt: now,
     updatedAt: now,
   };
@@ -63,7 +64,7 @@ export async function resetOperatorSettings(
   db: PostgresJsDatabase,
   operatorId: number
 ): Promise<OperatorSettings> {
-  const { enabledWorkflows, communicationPreferences, ...scalarDefaults } =
+  const { enabledWorkflows, communicationPreferences, communicationTemplates, ...scalarDefaults } =
     DEFAULT_OPERATOR_SETTINGS;
 
   const rows = await db
@@ -73,6 +74,7 @@ export async function resetOperatorSettings(
       ...scalarDefaults,
       enabledWorkflows: { ...enabledWorkflows },
       communicationPreferences: { ...communicationPreferences },
+      communicationTemplates,
     })
     .onConflictDoUpdate({
       target: operatorSettings.operatorId,
@@ -80,6 +82,7 @@ export async function resetOperatorSettings(
         ...scalarDefaults,
         enabledWorkflows: { ...enabledWorkflows },
         communicationPreferences: { ...communicationPreferences },
+        communicationTemplates,
         updatedAt: new Date(),
       },
     })

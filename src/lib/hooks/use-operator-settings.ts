@@ -25,6 +25,7 @@ export interface OperatorSettings {
     email: boolean;
     sms: boolean;
   };
+  communicationTemplates: Record<string, { subject: string; body: string }> | null;
   autoApprovalEnabled: boolean;
   autoApprovalThreshold: number;
 }

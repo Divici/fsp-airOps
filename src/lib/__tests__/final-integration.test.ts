@@ -81,6 +81,7 @@ vi.mock("@/lib/db/queries/operator-settings", () => ({
       waitlist: true,
     },
     communicationPreferences: { email: true, sms: false },
+    communicationTemplates: null,
     autoApprovalEnabled: false,
     autoApprovalThreshold: 0.7,
     createdAt: new Date("2026-01-01"),

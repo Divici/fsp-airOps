@@ -19,6 +19,7 @@ export const DEFAULT_OPERATOR_SETTINGS = {
     email: true,
     sms: false,
   },
+  communicationTemplates: null as Record<string, { subject: string; body: string }> | null,
   autoApprovalEnabled: false,
   autoApprovalThreshold: 0.7,
 } as const;
