@@ -22,3 +22,7 @@ export {
   type DetectedOpening,
   type OpeningDetectionResult,
 } from "./opening-detector";
+export {
+  InactivityDetector,
+  type InactiveStudent,
+} from "./inactivity-detector";

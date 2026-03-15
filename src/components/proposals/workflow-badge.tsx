@@ -3,6 +3,7 @@ import {
   Plane,
   GraduationCap,
   Clock,
+  UserX,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -31,6 +32,11 @@ const workflowConfig: Record<
     label: "Waitlist",
     icon: Clock,
     className: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400",
+  },
+  inactivity_outreach: {
+    label: "Inactive Student",
+    icon: UserX,
+    className: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400",
   },
 };
 

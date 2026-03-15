@@ -7,7 +7,8 @@ export type WorkflowType =
   | "reschedule"
   | "discovery_flight"
   | "next_lesson"
-  | "waitlist";
+  | "waitlist"
+  | "inactivity_outreach";
 
 export type TriggerType =
   | "cancellation"
