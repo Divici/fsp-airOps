@@ -100,15 +100,10 @@ describe("GET /api/auth/session", () => {
     vi.clearAllMocks();
   });
 
-  it("returns session data in mock mode (no cookie)", async () => {
+  it("returns 401 when no session cookie is present (mock fallback removed for logout support)", async () => {
     mockCookieStore.get.mockReturnValue(undefined);
 
     const res = await sessionGET();
-    // In mock mode, getCurrentSession returns a dev session
-    expect(res.status).toBe(200);
-
-    const data = await res.json();
-    expect(data.userId).toBeDefined();
-    expect(data.operatorId).toBeDefined();
+    expect(res.status).toBe(401);
   });
 });

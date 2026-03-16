@@ -3,7 +3,7 @@
 // ---------------------------------------------------------------------------
 
 import type { IFspClient } from "@/lib/fsp-client/types";
-import type { FspScheduleEvent, FspUser } from "@/lib/types/fsp";
+import type { FspScheduleEvent } from "@/lib/types/fsp";
 
 export interface InactiveStudent {
   studentId: string;

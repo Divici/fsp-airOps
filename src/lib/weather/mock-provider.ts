@@ -43,7 +43,7 @@ export class MockWeatherProvider implements IWeatherService {
     hoursAhead: number
   ): Promise<WeatherForecast[]> {
     const override = this.overrides[stationId];
-    const periodCount = 4;
+    const periodCount = Math.max(1, Math.ceil(hoursAhead / 3));
     const periodHours = 3;
     const now = new Date();
     const periods: WeatherForecast[] = [];

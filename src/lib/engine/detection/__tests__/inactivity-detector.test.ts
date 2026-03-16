@@ -84,7 +84,7 @@ describe("InactivityDetector", () => {
         Start: "2026-03-14T08:00:00",
         End: "2026-03-14T10:00:00",
         Title: "Flight",
-        CustomerName: "Alex Rivera",
+        CustomerName: "Dave AIhe",
         InstructorName: "Sarah Chen",
         AircraftName: "N12345",
       },

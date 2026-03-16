@@ -112,14 +112,12 @@ describe("session management", () => {
       expect(session).toBeNull();
     });
 
-    it("returns mock session when no cookie in mock mode", async () => {
+    it("returns null when no cookie in mock mode (mock fallback removed for logout support)", async () => {
       mockGetEnv.mockReturnValue({ FSP_ENVIRONMENT: "mock" } as ReturnType<typeof getEnv>);
       mockCookieStore.get.mockReturnValue(undefined);
 
       const session = await getCurrentSession();
-      expect(session).not.toBeNull();
-      expect(session!.userId).toBe("dev-user-000");
-      expect(session!.operatorId).toBe(1);
+      expect(session).toBeNull();
     });
 
     it("returns null for an invalid token", async () => {

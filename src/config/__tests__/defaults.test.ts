@@ -29,6 +29,7 @@ describe("DEFAULT_OPERATOR_SETTINGS", () => {
       next_lesson: true,
       waitlist: true,
       inactivity_outreach: true,
+      weather_disruption: false,
     });
   });
 

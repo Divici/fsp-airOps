@@ -116,7 +116,7 @@ describe("WeatherDisruptionDetector", () => {
 
     // Override listReservations to return only the sim reservation
     const originalList = mockClient.listReservations.bind(mockClient);
-    mockClient.listReservations = async (_opId, _params) => {
+    mockClient.listReservations = async () => {
       return [simReservation];
     };
 
