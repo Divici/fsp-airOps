@@ -17,6 +17,10 @@ ENV NODE_ENV=production
 
 RUN pnpm build
 
+# Bundle the postgres driver for the migration script (resolve pnpm symlinks)
+RUN mkdir -p /tmp/migrate-deps/node_modules && \
+    cp -rL node_modules/postgres /tmp/migrate-deps/node_modules/postgres
+
 # Stage 3: Production image
 FROM node:20-alpine AS runner
 WORKDIR /app
@@ -34,9 +38,10 @@ COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Copy migration files for runtime migration
+# Copy migration files and postgres driver (with resolved symlinks)
 COPY --from=builder /app/drizzle ./drizzle
 COPY --from=builder /app/scripts/migrate.mjs ./scripts/migrate.mjs
+COPY --from=builder /tmp/migrate-deps/node_modules/postgres ./node_modules/postgres
 
 USER nextjs
 
