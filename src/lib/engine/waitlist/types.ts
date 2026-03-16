@@ -27,6 +27,8 @@ export interface WaitlistCandidate {
   eligibilityScore: number;
   /** Raw signal values before weighting. */
   signals: WaitlistSignals;
+  /** Whether this student is flagged as checkride-ready (near training completion). */
+  isCheckrideReady?: boolean;
 }
 
 /** Constraints describing a schedule opening that needs to be filled. */

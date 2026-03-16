@@ -42,6 +42,7 @@ const mockSettings: OperatorSettings = {
   },
   communicationPreferences: { email: true, sms: false },
     communicationTemplates: null,
+  checkridePriorityWeight: 2.0,
   autoApprovalEnabled: false,
   autoApprovalThreshold: 0.7,
     weatherMinCeiling: 1000,

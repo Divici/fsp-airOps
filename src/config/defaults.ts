@@ -31,6 +31,7 @@ export const DEFAULT_OPERATOR_SETTINGS = {
   communicationTemplates: null as Record<string, { subject: string; body: string }> | null,
   weatherMinCeiling: 1000,
   weatherMinVisibility: 3,
+  checkridePriorityWeight: 2.0,
   autoApprovalEnabled: false,
   autoApprovalThreshold: 0.7,
 } as const;

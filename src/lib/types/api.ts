@@ -100,6 +100,7 @@ export const updateOperatorSettingsSchema = z.object({
     )
     .nullable()
     .optional(),
+  checkridePriorityWeight: z.number().min(0).max(10).optional(),
   autoApprovalEnabled: z.boolean().optional(),
   autoApprovalThreshold: z.number().min(0.5).max(0.95).optional(),
 });

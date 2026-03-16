@@ -34,6 +34,7 @@ export interface OperatorSettings {
     enabled: boolean;
   }>;
   communicationTemplates: Record<string, { subject: string; body: string }> | null;
+  checkridePriorityWeight: number;
   autoApprovalEnabled: boolean;
   autoApprovalThreshold: number;
 }

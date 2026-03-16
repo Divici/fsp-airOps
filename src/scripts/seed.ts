@@ -146,6 +146,7 @@ async function seed() {
   console.log("  Inserting operator settings...");
   await db.insert(operatorSettings).values({
     operatorId: OPERATOR_ID,
+    checkridePriorityWeight: 2.0,
     autoApprovalEnabled: true,
     autoApprovalThreshold: 0.7,
     enabledWorkflows: {
