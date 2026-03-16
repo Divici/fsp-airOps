@@ -25,7 +25,14 @@ function getWeekDays(weekStart: Date): Date[] {
   return Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 }
 
-function getEventPosition(event: ScheduleEvent) {
+interface EventLayout {
+  top: number;
+  height: number;
+  left: string;
+  width: string;
+}
+
+function getEventPosition(event: ScheduleEvent): { top: number; height: number } {
   const start = new Date(event.start);
   const end = new Date(event.end);
 
@@ -37,8 +44,62 @@ function getEventPosition(event: ScheduleEvent) {
 
   return {
     top: topOffset * HOUR_HEIGHT_PX,
-    height: Math.max(duration * HOUR_HEIGHT_PX, 20), // minimum 20px
+    height: Math.max(duration * HOUR_HEIGHT_PX, 20),
   };
+}
+
+/** Compute horizontal layout for overlapping events in a single day. */
+function layoutDayEvents(events: ScheduleEvent[]): Map<string, EventLayout> {
+  const layouts = new Map<string, EventLayout>();
+  if (events.length === 0) return layouts;
+
+  // Sort by start time
+  const sorted = [...events].sort(
+    (a, b) => new Date(a.start).getTime() - new Date(b.start).getTime()
+  );
+
+  // Assign columns using a greedy algorithm
+  const columns: { end: number; eventId: string }[][] = [];
+
+  for (const event of sorted) {
+    const startMs = new Date(event.start).getTime();
+    const endMs = new Date(event.end).getTime();
+
+    // Find the first column group where this event doesn't overlap
+    let placed = false;
+    for (const col of columns) {
+      const lastInCol = col[col.length - 1];
+      if (lastInCol.end <= startMs) {
+        col.push({ end: endMs, eventId: event.id });
+        placed = true;
+        break;
+      }
+    }
+    if (!placed) {
+      columns.push([{ end: endMs, eventId: event.id }]);
+    }
+  }
+
+  const totalCols = columns.length;
+  const padding = 2; // px gap between columns
+
+  for (let colIndex = 0; colIndex < columns.length; colIndex++) {
+    for (const entry of columns[colIndex]) {
+      const event = sorted.find((e) => e.id === entry.eventId)!;
+      const { top, height } = getEventPosition(event);
+      const widthPct = 100 / totalCols;
+      const leftPct = colIndex * widthPct;
+
+      layouts.set(event.id, {
+        top,
+        height,
+        left: `calc(${leftPct}% + ${padding}px)`,
+        width: `calc(${widthPct}% - ${padding * 2}px)`,
+      });
+    }
+  }
+
+  return layouts;
 }
 
 function formatHour(hour: number): string {
@@ -65,25 +126,29 @@ function getEventColor(type: string): string {
 // Event block component
 // ---------------------------------------------------------------------------
 
-function EventBlock({ event }: { event: ScheduleEvent }) {
-  const { top, height } = getEventPosition(event);
+function EventBlock({ event, layout }: { event: ScheduleEvent; layout: EventLayout }) {
   const colorClasses = getEventColor(event.type);
   const startTime = format(new Date(event.start), "h:mm a");
 
   return (
     <div
       className={cn(
-        "absolute inset-x-0.5 overflow-hidden rounded-md border px-1.5 py-0.5 text-xs leading-tight shadow-sm",
+        "absolute overflow-hidden rounded-md border px-1.5 py-0.5 text-xs leading-tight shadow-sm",
         colorClasses
       )}
-      style={{ top: `${top}px`, height: `${height}px` }}
+      style={{
+        top: `${layout.top}px`,
+        height: `${layout.height}px`,
+        left: layout.left,
+        width: layout.width,
+      }}
       title={`${event.title}\n${event.studentName} with ${event.instructorName}\n${event.aircraftName}\n${startTime}`}
     >
       <p className="truncate font-semibold">{event.studentName}</p>
-      {height > 30 && (
+      {layout.height > 30 && (
         <p className="truncate opacity-80">{event.instructorName}</p>
       )}
-      {height > 50 && (
+      {layout.height > 50 && (
         <p className="truncate opacity-70">{event.aircraftName.split(" - ")[0]}</p>
       )}
     </div>
@@ -237,30 +302,34 @@ export function WeeklyCalendar({ events, weekStart }: WeeklyCalendarProps) {
             </div>
 
             {/* Day columns */}
-            {days.map((_, dayIndex) => (
-              <div
-                key={dayIndex}
-                className={cn(
-                  "relative border-r border-border last:border-r-0",
-                  // On mobile hide non-selected days
-                  dayIndex !== mobileDay && "hidden md:block"
-                )}
-              >
-                {/* Hour grid lines */}
-                {Array.from({ length: TOTAL_HOURS }, (_, i) => (
-                  <div
-                    key={i}
-                    className="absolute inset-x-0 border-t border-border/50"
-                    style={{ top: `${i * HOUR_HEIGHT_PX}px` }}
-                  />
-                ))}
+            {days.map((_, dayIndex) => {
+              const dayLayouts = layoutDayEvents(eventsByDay[dayIndex]);
+              return (
+                <div
+                  key={dayIndex}
+                  className={cn(
+                    "relative border-r border-border last:border-r-0",
+                    dayIndex !== mobileDay && "hidden md:block"
+                  )}
+                >
+                  {/* Hour grid lines */}
+                  {Array.from({ length: TOTAL_HOURS }, (_, i) => (
+                    <div
+                      key={i}
+                      className="absolute inset-x-0 border-t border-border/50"
+                      style={{ top: `${i * HOUR_HEIGHT_PX}px` }}
+                    />
+                  ))}
 
-                {/* Events */}
-                {eventsByDay[dayIndex].map((event) => (
-                  <EventBlock key={event.id} event={event} />
-                ))}
-              </div>
-            ))}
+                  {/* Events */}
+                  {eventsByDay[dayIndex].map((event) => {
+                    const layout = dayLayouts.get(event.id);
+                    if (!layout) return null;
+                    return <EventBlock key={event.id} event={event} layout={layout} />;
+                  })}
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
