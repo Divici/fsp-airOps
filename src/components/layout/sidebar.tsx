@@ -6,6 +6,7 @@ import { useNav } from "@/components/layout/nav-context";
 import Image from "next/image";
 import {
   LayoutDashboard,
+  Calendar,
   FileText,
   Plane,
   Settings,
@@ -18,6 +19,7 @@ import { Button } from "@/components/ui/button";
 
 const navItems = [
   { label: "Dashboard", href: "/", icon: LayoutDashboard },
+  { label: "Schedule", href: "/schedule", icon: Calendar },
   { label: "Proposals", href: "/proposals", icon: FileText },
   { label: "Discovery Flights", href: "/discovery", icon: Plane },
   { label: "Activity", href: "/activity", icon: Activity },
