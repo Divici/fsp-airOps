@@ -19,6 +19,8 @@ export interface SendParams {
   to: string;
   subject?: string;
   body: string;
+  /** Optional HTML version of the body for email. */
+  html?: string;
   templateId?: string;
   proposalId?: string;
   metadata?: Record<string, unknown>;
@@ -70,6 +72,7 @@ export class CommunicationService {
         to: params.to,
         subject: params.subject,
         body: params.body,
+        html: params.html,
         metadata: params.metadata,
       });
     } catch (err) {

@@ -48,6 +48,7 @@ export class FspEmailProvider implements CommunicationProvider {
         from: this.fromEmail!,
         subject: request.subject ?? "(No subject)",
         text: request.body,
+        ...(request.html ? { html: request.html } : {}),
       });
 
       const messageId =

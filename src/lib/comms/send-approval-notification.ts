@@ -7,6 +7,7 @@ import { CommunicationService } from "./communication-service";
 import { FspEmailProvider } from "./email-provider";
 import { SmsProvider } from "./sms-provider";
 import { getTemplate, renderTemplate } from "./templates";
+import { wrapInHtmlTemplate } from "./html-template";
 import { FeatureFlagService } from "@/lib/feature-flags/feature-flags";
 import type { ProposalWithActions } from "@/lib/db/queries/proposals";
 import { isOptedOut } from "@/lib/db/queries/communication-opt-outs";
@@ -26,6 +27,10 @@ export interface ApprovalNotificationParams {
   operatorName?: string;
   /** Whether execution succeeded — determines which template to use */
   executionSuccess: boolean;
+  /** Operator brand color (hex) for HTML emails. Defaults to #2563eb. */
+  brandColor?: string;
+  /** URL to operator logo image for HTML emails. */
+  logoUrl?: string;
   /** Resolved display names for instructor/aircraft/location */
   instructorName?: string;
   aircraftTail?: string;
@@ -49,6 +54,8 @@ export async function sendApprovalNotification(
     studentPhone,
     operatorName = "Your Flight School",
     executionSuccess,
+    brandColor = "#2563eb",
+    logoUrl,
     instructorName: resolvedInstructor,
     aircraftTail: resolvedAircraft,
     locationName: resolvedLocation,
@@ -111,6 +118,15 @@ export async function sendApprovalNotification(
         };
         const rendered = renderTemplate(template, emailVars);
 
+        // Build HTML version for email with operator branding
+        const htmlEmail = wrapInHtmlTemplate({
+          body: rendered.body,
+          subject: rendered.subject,
+          brandColor,
+          logoUrl: logoUrl ?? undefined,
+          operatorName,
+        });
+
         await commsService
           .send({
             operatorId,
@@ -119,6 +135,7 @@ export async function sendApprovalNotification(
             to: studentEmail,
             subject: rendered.subject,
             body: rendered.body,
+            html: htmlEmail,
             templateId,
             proposalId: proposal.id,
           })

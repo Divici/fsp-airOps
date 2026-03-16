@@ -34,6 +34,8 @@ function toSettingsResponse(s: OperatorSettings) {
     communicationPreferences: s.communicationPreferences,
     customWeights: s.customWeights,
     communicationTemplates: s.communicationTemplates ?? null,
+    brandColor: s.brandColor,
+    logoUrl: s.logoUrl ?? null,
     autoApprovalEnabled: s.autoApprovalEnabled,
     autoApprovalThreshold: s.autoApprovalThreshold,
   };

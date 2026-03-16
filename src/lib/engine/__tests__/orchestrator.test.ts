@@ -53,6 +53,8 @@ const mockSettings: OperatorSettings = {
     weatherMinCeiling: 1000,
     weatherMinVisibility: 3,
     customWeights: [],
+    brandColor: "#2563eb",
+    logoUrl: null,
   createdAt: new Date("2026-01-01"),
   updatedAt: new Date("2026-01-01"),
 };
@@ -96,6 +98,8 @@ vi.mock("@/lib/db/queries/operator-settings", () => ({
     weatherMinCeiling: 1000,
     weatherMinVisibility: 3,
     customWeights: [],
+    brandColor: "#2563eb",
+    logoUrl: null,
     createdAt: new Date("2026-01-01"),
     updatedAt: new Date("2026-01-01"),
   }),

@@ -50,6 +50,13 @@
       "when": 1773690814305,
       "tag": "0006_wooden_madripoor",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1773691109205,
+      "tag": "0007_sharp_sabretooth",
+      "breakpoints": true
     }
   ]
 }

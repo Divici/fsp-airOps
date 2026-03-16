@@ -6,6 +6,7 @@ import {
   jsonb,
   pgTable,
   real,
+  text,
   timestamp,
   uuid,
 } from "drizzle-orm/pg-core";
@@ -54,6 +55,8 @@ export const operatorSettings = pgTable(
       jsonb().$type<Record<string, { subject: string; body: string }> | null>(),
     weatherMinCeiling: integer().notNull().default(1000),
     weatherMinVisibility: real().notNull().default(3),
+    brandColor: text().notNull().default("#2563eb"),
+    logoUrl: text(),
     autoApprovalEnabled: boolean().notNull().default(false),
     autoApprovalThreshold: real().notNull().default(0.7),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
