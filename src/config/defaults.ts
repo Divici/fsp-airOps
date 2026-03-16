@@ -33,6 +33,7 @@ export const DEFAULT_OPERATOR_SETTINGS = {
   weatherMinVisibility: 3,
   brandColor: "#2563eb",
   logoUrl: null as string | null,
+  checkridePriorityWeight: 2.0,
   autoApprovalEnabled: false,
   autoApprovalThreshold: 0.7,
 } as const;

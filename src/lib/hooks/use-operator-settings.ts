@@ -36,6 +36,7 @@ export interface OperatorSettings {
   communicationTemplates: Record<string, { subject: string; body: string }> | null;
   brandColor: string;
   logoUrl: string | null;
+  checkridePriorityWeight: number;
   autoApprovalEnabled: boolean;
   autoApprovalThreshold: number;
 }

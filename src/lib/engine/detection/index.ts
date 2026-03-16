@@ -30,3 +30,7 @@ export {
   WeatherDisruptionDetector,
   type AffectedFlight,
 } from "./weather-detector";
+export {
+  MilestoneDetector,
+  type MilestoneStudent,
+} from "./milestone-detector";

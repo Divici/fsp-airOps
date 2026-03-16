@@ -2,7 +2,7 @@
 
 import { NavLink } from "@/components/layout/nav-context";
 import { formatDistanceToNow, format } from "date-fns";
-import { AlertTriangle, Clock, MapPin, ChevronRight } from "lucide-react";
+import { AlertTriangle, Clock, MapPin, ChevronRight, GraduationCap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -57,6 +57,15 @@ export function ProposalCard({
                 <WorkflowBadge workflowType={proposal.workflowType} />
                 <StatusBadge status={proposal.status} />
                 {proposal.autoApproved && <AutoApprovedBadge />}
+                {proposal.isCheckrideReady && (
+                  <span
+                    data-testid="checkride-ready-badge"
+                    className="inline-flex h-5 items-center gap-1 rounded-full bg-indigo-100 px-2 text-xs font-medium text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400"
+                  >
+                    <GraduationCap className="size-3" />
+                    Checkride Soon
+                  </span>
+                )}
                 {isHighPriority && proposal.status === "pending" && (
                   <span className="ml-auto inline-flex items-center gap-1 text-xs font-medium text-amber-600 dark:text-amber-400">
                     <AlertTriangle className="size-3" />

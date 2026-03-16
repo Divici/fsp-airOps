@@ -22,4 +22,6 @@ export interface ProposalView {
   expiresAt: string | null;
   autoApproved: boolean;
   riskScore: number | null;
+  /** Whether this proposal involves a student near checkride readiness. */
+  isCheckrideReady?: boolean;
 }

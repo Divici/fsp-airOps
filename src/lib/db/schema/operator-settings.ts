@@ -57,6 +57,7 @@ export const operatorSettings = pgTable(
     weatherMinVisibility: real().notNull().default(3),
     brandColor: text().notNull().default("#2563eb"),
     logoUrl: text(),
+    checkridePriorityWeight: real().notNull().default(2.0),
     autoApprovalEnabled: boolean().notNull().default(false),
     autoApprovalThreshold: real().notNull().default(0.7),
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),

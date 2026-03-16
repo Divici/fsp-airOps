@@ -8,12 +8,15 @@ import { normalizeSignal } from "./signals";
 
 export class WaitlistRanker {
   private customWeights: CustomWeight[];
+  private checkridePriorityWeight: number;
 
   constructor(
     private weights: WaitlistWeights,
     customWeights: CustomWeight[] = [],
+    checkridePriorityWeight: number = 1.0,
   ) {
     this.customWeights = customWeights.filter((cw) => cw.enabled);
+    this.checkridePriorityWeight = checkridePriorityWeight;
   }
 
   /**
@@ -31,7 +34,13 @@ export class WaitlistRanker {
     const customBounds = this.computeCustomBounds(candidates);
 
     const scored = candidates.map((candidate) => {
-      const score = this.computeScore(candidate, bounds, customBounds);
+      let score = this.computeScore(candidate, bounds, customBounds);
+
+      // Apply checkride priority boost: multiply base score by weight
+      if (candidate.isCheckrideReady && this.checkridePriorityWeight > 1) {
+        score *= this.checkridePriorityWeight;
+      }
+
       return { ...candidate, eligibilityScore: Math.round(score * 1000) / 1000 };
     });
 
