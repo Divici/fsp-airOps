@@ -1,8 +1,8 @@
 "use client";
 
 import { NavLink } from "@/components/layout/nav-context";
-import { formatDistanceToNow, format } from "date-fns";
-import { ArrowLeft, Clock, MapPin, AlertTriangle } from "lucide-react";
+import { formatDistanceToNow, format, startOfWeek } from "date-fns";
+import { ArrowLeft, Clock, MapPin, AlertTriangle, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -175,6 +175,13 @@ export function ProposalDetail({ proposalId }: ProposalDetailProps) {
             <Clock className="size-3" />
             {proposedTime}
           </span>
+          <NavLink
+            href={`/schedule?week=${format(startOfWeek(new Date(proposal.proposedStartTime), { weekStartsOn: 1 }), "yyyy-MM-dd")}`}
+            className="inline-flex items-center gap-1 text-primary hover:underline"
+          >
+            <CalendarDays className="size-3" />
+            View in schedule
+          </NavLink>
           <span>Created {createdAgo}</span>
           {proposal.expiresAt && (
             <span className="text-amber-600 dark:text-amber-400">
