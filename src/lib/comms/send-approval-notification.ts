@@ -9,6 +9,8 @@ import { SmsProvider } from "./sms-provider";
 import { getTemplate, renderTemplate } from "./templates";
 import { FeatureFlagService } from "@/lib/feature-flags/feature-flags";
 import type { ProposalWithActions } from "@/lib/db/queries/proposals";
+import { isOptedOut } from "@/lib/db/queries/communication-opt-outs";
+import { generateUnsubscribeToken } from "./unsubscribe";
 
 export interface ApprovalNotificationParams {
   db: PostgresJsDatabase;
@@ -85,42 +87,81 @@ export async function sendApprovalNotification(
       aircraftTail: resolvedAircraft ?? firstAction?.aircraftId ?? "TBD",
     };
 
-    const rendered = renderTemplate(template, variables);
+    const studentRecipientId = proposal.affectedStudentIds?.[0] ?? "unknown";
+
+    // Generate unsubscribe URLs for each channel
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
     // Send email if enabled and we have an address
     if (flags.enableEmailNotifications && studentEmail) {
-      await commsService
-        .send({
-          operatorId,
-          channel: "email",
-          recipientId: proposal.affectedStudentIds?.[0] ?? "unknown",
-          to: studentEmail,
-          subject: rendered.subject,
-          body: rendered.body,
-          templateId,
-          proposalId: proposal.id,
-        })
-        .catch((err) =>
-          console.error("[sendApprovalNotification] email error:", err)
+      // Check per-student opt-out
+      if (await isOptedOut(db, operatorId, studentRecipientId, "email")) {
+        console.log(
+          `[sendApprovalNotification] skipping email — student ${studentRecipientId} opted out`
         );
+      } else {
+        const emailToken = await generateUnsubscribeToken(
+          studentRecipientId,
+          operatorId,
+          "email"
+        );
+        const emailVars = {
+          ...variables,
+          unsubscribeUrl: `${appUrl}/unsubscribe/${emailToken}`,
+        };
+        const rendered = renderTemplate(template, emailVars);
+
+        await commsService
+          .send({
+            operatorId,
+            channel: "email",
+            recipientId: studentRecipientId,
+            to: studentEmail,
+            subject: rendered.subject,
+            body: rendered.body,
+            templateId,
+            proposalId: proposal.id,
+          })
+          .catch((err) =>
+            console.error("[sendApprovalNotification] email error:", err)
+          );
+      }
     }
 
     // Send SMS if enabled and we have a phone number
     if (flags.enableSmsNotifications && studentPhone) {
-      await commsService
-        .send({
-          operatorId,
-          channel: "sms",
-          recipientId: proposal.affectedStudentIds?.[0] ?? "unknown",
-          to: studentPhone,
-          subject: rendered.subject,
-          body: rendered.body,
-          templateId,
-          proposalId: proposal.id,
-        })
-        .catch((err) =>
-          console.error("[sendApprovalNotification] sms error:", err)
+      // Check per-student opt-out
+      if (await isOptedOut(db, operatorId, studentRecipientId, "sms")) {
+        console.log(
+          `[sendApprovalNotification] skipping sms — student ${studentRecipientId} opted out`
         );
+      } else {
+        const smsToken = await generateUnsubscribeToken(
+          studentRecipientId,
+          operatorId,
+          "sms"
+        );
+        const smsVars = {
+          ...variables,
+          unsubscribeUrl: `${appUrl}/unsubscribe/${smsToken}`,
+        };
+        const rendered = renderTemplate(template, smsVars);
+
+        await commsService
+          .send({
+            operatorId,
+            channel: "sms",
+            recipientId: studentRecipientId,
+            to: studentPhone,
+            subject: rendered.subject,
+            body: rendered.body,
+            templateId,
+            proposalId: proposal.id,
+          })
+          .catch((err) =>
+            console.error("[sendApprovalNotification] sms error:", err)
+          );
+      }
     }
   } catch (err) {
     // Never let notification failures propagate

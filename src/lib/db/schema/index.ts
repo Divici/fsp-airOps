@@ -36,6 +36,8 @@ export {
 
 export { scheduleSnapshots } from "./snapshots";
 
+export { communicationOptOuts } from "./communication-opt-outs";
+
 // Inferred types for each table
 import type { operatorSettings } from "./operator-settings";
 import type { scheduleSnapshots } from "./snapshots";
@@ -45,6 +47,7 @@ import type { approvalDecisions } from "./approvals";
 import type { auditEvents } from "./audit";
 import type { communicationRecords } from "./communications";
 import type { prospectRequests } from "./prospects";
+import type { communicationOptOuts } from "./communication-opt-outs";
 
 export type OperatorSettings = InferSelectModel<typeof operatorSettings>;
 export type NewOperatorSettings = InferInsertModel<typeof operatorSettings>;
@@ -72,3 +75,6 @@ export type NewProspectRequest = InferInsertModel<typeof prospectRequests>;
 
 export type ScheduleSnapshot = InferSelectModel<typeof scheduleSnapshots>;
 export type NewScheduleSnapshot = InferInsertModel<typeof scheduleSnapshots>;
+
+export type CommunicationOptOut = InferSelectModel<typeof communicationOptOuts>;
+export type NewCommunicationOptOut = InferInsertModel<typeof communicationOptOuts>;

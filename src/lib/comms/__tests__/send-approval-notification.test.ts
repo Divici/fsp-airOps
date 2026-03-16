@@ -29,6 +29,20 @@ vi.mock("@/lib/feature-flags/feature-flags", () => ({
   })),
 }));
 
+// Mock opt-out check — default: not opted out
+const mockIsOptedOut = vi.fn().mockResolvedValue(false);
+
+vi.mock("@/lib/db/queries/communication-opt-outs", () => ({
+  isOptedOut: (...args: unknown[]) => mockIsOptedOut(...args),
+}));
+
+// Mock unsubscribe token generation
+vi.mock("../unsubscribe", () => ({
+  generateUnsubscribeToken: vi
+    .fn()
+    .mockResolvedValue("mock-unsubscribe-token"),
+}));
+
 import { sendApprovalNotification } from "../send-approval-notification";
 
 // ---------------------------------------------------------------------------
