@@ -17,12 +17,12 @@ const templates: Record<string, MessageTemplate> = {
   proposal_approved: {
     id: "proposal_approved",
     subject: "Your lesson has been scheduled",
-    body: "Hi {{studentName}},\n\nGreat news! Your {{workflowType}} has been approved and scheduled.\n\nDetails:\n- Date: {{date}}\n- Time: {{time}}\n- Location: {{location}}\n\nSee you there!\n\nBest,\n{{operatorName}}",
+    body: "Hi {{studentName}},\n\nGreat news! Your {{workflowType}} has been approved and scheduled.\n\nDetails:\n- Date: {{date}}\n- Time: {{time}}\n- Location: {{location}}\n\nSee you there!\n\nBest,\n{{operatorName}}\n\nTo unsubscribe from these notifications: {{unsubscribeUrl}}",
   },
   reservation_created: {
     id: "reservation_created",
     subject: "Reservation confirmed",
-    body: "Hi {{studentName}},\n\nYour reservation has been confirmed in the schedule.\n\nReservation ID: {{reservationId}}\n- Date: {{date}}\n- Time: {{time}}\n- Instructor: {{instructorName}}\n- Aircraft: {{aircraftTail}}\n\nBest,\n{{operatorName}}",
+    body: "Hi {{studentName}},\n\nYour reservation has been confirmed in the schedule.\n\nReservation ID: {{reservationId}}\n- Date: {{date}}\n- Time: {{time}}\n- Instructor: {{instructorName}}\n- Aircraft: {{aircraftTail}}\n\nBest,\n{{operatorName}}\n\nTo unsubscribe from these notifications: {{unsubscribeUrl}}",
   },
   discovery_flight_confirmation: {
     id: "discovery_flight_confirmation",

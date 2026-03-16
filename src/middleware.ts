@@ -14,6 +14,7 @@ const PUBLIC_PATTERNS = [
   /^\/api\/health$/,
   /^\/api\/auth(\/|$)/,
   /^\/login(\/|$)/,
+  /^\/unsubscribe(\/|$)/,
   /^\/_next(\/|$)/,
   /^\/favicon\.ico$/,
 ];
