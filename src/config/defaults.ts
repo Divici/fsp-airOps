@@ -31,6 +31,8 @@ export const DEFAULT_OPERATOR_SETTINGS = {
   communicationTemplates: null as Record<string, { subject: string; body: string }> | null,
   weatherMinCeiling: 1000,
   weatherMinVisibility: 3,
+  brandColor: "#2563eb",
+  logoUrl: null as string | null,
   autoApprovalEnabled: false,
   autoApprovalThreshold: 0.7,
 } as const;

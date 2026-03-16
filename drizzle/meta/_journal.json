@@ -43,6 +43,13 @@
       "when": 1773620049720,
       "tag": "0005_complete_puck",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1773691109205,
+      "tag": "0006_sharp_sabretooth",
+      "breakpoints": true
     }
   ]
 }

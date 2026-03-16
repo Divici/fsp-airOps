@@ -34,6 +34,8 @@ export interface OperatorSettings {
     enabled: boolean;
   }>;
   communicationTemplates: Record<string, { subject: string; body: string }> | null;
+  brandColor: string;
+  logoUrl: string | null;
   autoApprovalEnabled: boolean;
   autoApprovalThreshold: number;
 }

@@ -5,6 +5,8 @@
 export { CommunicationService } from "./communication-service";
 export type { SendParams, HistoryFilters } from "./communication-service";
 export { FspEmailProvider } from "./email-provider";
+export { wrapInHtmlTemplate } from "./html-template";
+export type { HtmlTemplateOptions } from "./html-template";
 export { SmsProvider } from "./sms-provider";
 export {
   renderTemplate,

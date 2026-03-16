@@ -100,6 +100,8 @@ export const updateOperatorSettingsSchema = z.object({
     )
     .nullable()
     .optional(),
+  brandColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Must be a valid hex color").optional(),
+  logoUrl: z.string().url().nullable().optional(),
   autoApprovalEnabled: z.boolean().optional(),
   autoApprovalThreshold: z.number().min(0.5).max(0.95).optional(),
 });

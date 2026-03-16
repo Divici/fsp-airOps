@@ -13,6 +13,7 @@ import { SchedulingPreferences } from "./scheduling-preferences";
 import { CommunicationPreferences } from "./communication-preferences";
 import { TemplateEditor } from "./template-editor";
 import { AutoApprovalSettings } from "./auto-approval-settings";
+import { BrandingSettings } from "./branding-settings";
 import { ResetDefaultsButton } from "./reset-defaults-button";
 
 export function SettingsForm() {
@@ -85,6 +86,12 @@ export function SettingsForm() {
         onSave={(templates) =>
           handleUpdate({ communicationTemplates: templates })
         }
+        disabled={isSaving}
+      />
+
+      <BrandingSettings
+        settings={settings}
+        onUpdate={handleUpdate}
         disabled={isSaving}
       />
 

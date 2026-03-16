@@ -9,6 +9,8 @@ export interface SendMessageRequest {
   to: string;
   subject?: string;
   body: string;
+  /** Optional HTML version of the body for email clients that support it. */
+  html?: string;
   metadata?: Record<string, unknown>;
 }
 
