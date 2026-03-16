@@ -1,11 +1,11 @@
 /**
  * Lightweight migration runner for production.
- * Uses the postgres driver directly (no drizzle-kit dependency).
- * Reads SQL files from drizzle/ and applies them in order.
+ * Compatible with drizzle-kit's migration tracking format.
  */
 import { readFileSync, readdirSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
+import { createHash } from "crypto";
 import postgres from "postgres";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -22,14 +22,7 @@ const sql = postgres(connectionString, { max: 1 });
 async function migrate() {
   console.log("Running migrations...");
 
-  // Create migrations tracking table if not exists
-  await sql`
-    CREATE TABLE IF NOT EXISTS drizzle.__drizzle_migrations (
-      id SERIAL PRIMARY KEY,
-      hash TEXT NOT NULL,
-      created_at BIGINT
-    )
-  `;
+  // Create drizzle schema and migrations table (matches drizzle-kit format)
   await sql`CREATE SCHEMA IF NOT EXISTS drizzle`;
   await sql`
     CREATE TABLE IF NOT EXISTS drizzle.__drizzle_migrations (
@@ -39,7 +32,7 @@ async function migrate() {
     )
   `;
 
-  // Get already-applied migrations
+  // Get already-applied migration hashes
   const applied = await sql`SELECT hash FROM drizzle.__drizzle_migrations`;
   const appliedHashes = new Set(applied.map((r) => r.hash));
 
@@ -48,13 +41,17 @@ async function migrate() {
 
   let count = 0;
   for (const entry of journal.entries) {
-    if (appliedHashes.has(entry.tag)) {
+    const sqlContent = readFileSync(join(drizzleDir, `${entry.tag}.sql`), "utf-8");
+
+    // Compute SHA-256 hash of SQL content (same as drizzle-kit)
+    const hash = createHash("sha256").update(sqlContent).digest("hex");
+
+    if (appliedHashes.has(hash)) {
       continue;
     }
 
-    const sqlFile = readFileSync(join(drizzleDir, `${entry.tag}.sql`), "utf-8");
     // Split on statement breakpoints
-    const statements = sqlFile
+    const statements = sqlContent
       .split("--> statement-breakpoint")
       .map((s) => s.trim())
       .filter(Boolean);
@@ -65,7 +62,7 @@ async function migrate() {
       await sql.unsafe(statement);
     }
 
-    await sql`INSERT INTO drizzle.__drizzle_migrations (hash, created_at) VALUES (${entry.tag}, ${Date.now()})`;
+    await sql`INSERT INTO drizzle.__drizzle_migrations (hash, created_at) VALUES (${hash}, ${Date.now()})`;
     count++;
   }
 

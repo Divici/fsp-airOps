@@ -12,7 +12,7 @@ Dockerfile
 .github
 memory-bank
 decisions
-drizzle/meta
+# drizzle/meta is needed for migrations at runtime
 *.log
 coverage
 .vscode
