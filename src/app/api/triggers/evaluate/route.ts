@@ -15,6 +15,9 @@ import { createFspClient } from "@/lib/fsp-client";
 import { TriggerService } from "@/lib/engine/trigger-service";
 
 const manualEvaluateSchema = z.object({
+  type: z.string().optional(),
+  sourceEntityId: z.string().optional(),
+  sourceEntityType: z.string().optional(),
   workflowType: z.string().optional(),
   context: z.record(z.string(), z.unknown()).optional(),
 });
@@ -44,7 +47,9 @@ export async function POST(request: Request) {
 
     const result = await triggerService.createAndDispatch({
       operatorId: tenant.operatorId,
-      type: "manual",
+      type: (data.type as "manual" | "cancellation" | "discovery_request" | "lesson_complete" | "inactivity_detected" | "weather_detected") ?? "manual",
+      sourceEntityId: data.sourceEntityId,
+      sourceEntityType: data.sourceEntityType,
       context: {
         workflowType: data.workflowType,
         ...data.context,

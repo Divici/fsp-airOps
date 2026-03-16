@@ -49,8 +49,9 @@ next-env.d.ts
 .DS_Store
 Thumbs.db
 
-# Study guide (personal reference)
+# Study guide and demo script (personal reference)
 STUDY_GUIDE.md
+DEMO_SCRIPT.md
 
 # Claude Code config
 .claude/
