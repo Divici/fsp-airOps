@@ -19,6 +19,9 @@ interface DiscoveryIntakeFormProps {
   operatorId: number;
 }
 
+const inputClasses =
+  "w-full rounded-lg border border-border bg-background px-3 py-2 text-foreground placeholder-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary outline-none";
+
 export function DiscoveryIntakeForm({ operatorId }: DiscoveryIntakeFormProps) {
   const [state, setState] = useState<SubmitState>("idle");
   const [errorMessage, setErrorMessage] = useState("");
@@ -43,7 +46,6 @@ export function DiscoveryIntakeForm({ operatorId }: DiscoveryIntakeFormProps) {
   ) {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    // Clear field-level validation error on change
     if (validationErrors[name]) {
       setValidationErrors((prev) => {
         const next = { ...prev };
@@ -58,7 +60,6 @@ export function DiscoveryIntakeForm({ operatorId }: DiscoveryIntakeFormProps) {
     setValidationErrors({});
     setErrorMessage("");
 
-    // Build the request body
     const timeWindow = TIME_OF_DAY_OPTIONS.find(
       (o) => o.value === formData.preferredTimeOfDay
     );
@@ -77,7 +78,6 @@ export function DiscoveryIntakeForm({ operatorId }: DiscoveryIntakeFormProps) {
       notes: formData.notes || undefined,
     };
 
-    // Client-side validation
     const parsed = createProspectRequestSchema.safeParse(requestBody);
     if (!parsed.success) {
       const errors: Record<string, string> = {};
@@ -115,10 +115,10 @@ export function DiscoveryIntakeForm({ operatorId }: DiscoveryIntakeFormProps) {
   // Success screen
   if (state === "success") {
     return (
-      <div className="bg-white rounded-xl shadow-lg p-8 text-center">
-        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+      <div className="rounded-xl border border-border bg-card p-8 text-center shadow-lg">
+        <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
           <svg
-            className="w-8 h-8 text-green-600"
+            className="size-8 text-green-600 dark:text-green-400"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -131,10 +131,10 @@ export function DiscoveryIntakeForm({ operatorId }: DiscoveryIntakeFormProps) {
             />
           </svg>
         </div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">
+        <h2 className="mb-2 text-2xl font-bold text-foreground">
           Request Submitted!
         </h2>
-        <p className="text-gray-600 mb-6">
+        <p className="mb-6 text-muted-foreground">
           Thank you for your interest in a discovery flight. We&apos;ll review
           your request and get back to you with available times shortly.
         </p>
@@ -151,7 +151,7 @@ export function DiscoveryIntakeForm({ operatorId }: DiscoveryIntakeFormProps) {
               notes: "",
             });
           }}
-          className="text-sky-600 hover:text-sky-700 font-medium"
+          className="font-medium text-primary hover:text-primary/80"
         >
           Submit another request
         </button>
@@ -162,16 +162,16 @@ export function DiscoveryIntakeForm({ operatorId }: DiscoveryIntakeFormProps) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="bg-white rounded-xl shadow-lg p-8 space-y-6"
+      className="space-y-6 rounded-xl border border-border bg-card p-8 shadow-lg"
     >
       {/* Name fields */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <label
             htmlFor="firstName"
-            className="block text-sm font-medium text-gray-700 mb-1"
+            className="mb-1 block text-sm font-medium text-foreground"
           >
-            First Name <span className="text-red-500">*</span>
+            First Name <span className="text-destructive">*</span>
           </label>
           <input
             id="firstName"
@@ -180,11 +180,11 @@ export function DiscoveryIntakeForm({ operatorId }: DiscoveryIntakeFormProps) {
             required
             value={formData.firstName}
             onChange={handleChange}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 outline-none"
+            className={inputClasses}
             placeholder="Jane"
           />
           {validationErrors.firstName && (
-            <p className="mt-1 text-sm text-red-600">
+            <p className="mt-1 text-sm text-destructive">
               {validationErrors.firstName}
             </p>
           )}
@@ -192,9 +192,9 @@ export function DiscoveryIntakeForm({ operatorId }: DiscoveryIntakeFormProps) {
         <div>
           <label
             htmlFor="lastName"
-            className="block text-sm font-medium text-gray-700 mb-1"
+            className="mb-1 block text-sm font-medium text-foreground"
           >
-            Last Name <span className="text-red-500">*</span>
+            Last Name <span className="text-destructive">*</span>
           </label>
           <input
             id="lastName"
@@ -203,11 +203,11 @@ export function DiscoveryIntakeForm({ operatorId }: DiscoveryIntakeFormProps) {
             required
             value={formData.lastName}
             onChange={handleChange}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 outline-none"
+            className={inputClasses}
             placeholder="Doe"
           />
           {validationErrors.lastName && (
-            <p className="mt-1 text-sm text-red-600">
+            <p className="mt-1 text-sm text-destructive">
               {validationErrors.lastName}
             </p>
           )}
@@ -218,9 +218,9 @@ export function DiscoveryIntakeForm({ operatorId }: DiscoveryIntakeFormProps) {
       <div>
         <label
           htmlFor="email"
-          className="block text-sm font-medium text-gray-700 mb-1"
+          className="mb-1 block text-sm font-medium text-foreground"
         >
-          Email <span className="text-red-500">*</span>
+          Email <span className="text-destructive">*</span>
         </label>
         <input
           id="email"
@@ -229,11 +229,11 @@ export function DiscoveryIntakeForm({ operatorId }: DiscoveryIntakeFormProps) {
           required
           value={formData.email}
           onChange={handleChange}
-          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 outline-none"
+          className={inputClasses}
           placeholder="jane@example.com"
         />
         {validationErrors.email && (
-          <p className="mt-1 text-sm text-red-600">
+          <p className="mt-1 text-sm text-destructive">
             {validationErrors.email}
           </p>
         )}
@@ -243,7 +243,7 @@ export function DiscoveryIntakeForm({ operatorId }: DiscoveryIntakeFormProps) {
       <div>
         <label
           htmlFor="phone"
-          className="block text-sm font-medium text-gray-700 mb-1"
+          className="mb-1 block text-sm font-medium text-foreground"
         >
           Phone
         </label>
@@ -253,7 +253,7 @@ export function DiscoveryIntakeForm({ operatorId }: DiscoveryIntakeFormProps) {
           type="tel"
           value={formData.phone}
           onChange={handleChange}
-          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 outline-none"
+          className={inputClasses}
           placeholder="(555) 123-4567"
         />
       </div>
@@ -262,7 +262,7 @@ export function DiscoveryIntakeForm({ operatorId }: DiscoveryIntakeFormProps) {
       <div>
         <label
           htmlFor="preferredDate"
-          className="block text-sm font-medium text-gray-700 mb-1"
+          className="mb-1 block text-sm font-medium text-foreground"
         >
           Preferred Date
         </label>
@@ -272,7 +272,7 @@ export function DiscoveryIntakeForm({ operatorId }: DiscoveryIntakeFormProps) {
           type="date"
           value={formData.preferredDate}
           onChange={handleChange}
-          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 outline-none"
+          className={inputClasses}
         />
       </div>
 
@@ -280,7 +280,7 @@ export function DiscoveryIntakeForm({ operatorId }: DiscoveryIntakeFormProps) {
       <div>
         <label
           htmlFor="preferredTimeOfDay"
-          className="block text-sm font-medium text-gray-700 mb-1"
+          className="mb-1 block text-sm font-medium text-foreground"
         >
           Preferred Time of Day
         </label>
@@ -289,7 +289,7 @@ export function DiscoveryIntakeForm({ operatorId }: DiscoveryIntakeFormProps) {
           name="preferredTimeOfDay"
           value={formData.preferredTimeOfDay}
           onChange={handleChange}
-          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 outline-none"
+          className={inputClasses}
         >
           <option value="">No preference</option>
           {TIME_OF_DAY_OPTIONS.map((opt) => (
@@ -304,7 +304,7 @@ export function DiscoveryIntakeForm({ operatorId }: DiscoveryIntakeFormProps) {
       <div>
         <label
           htmlFor="notes"
-          className="block text-sm font-medium text-gray-700 mb-1"
+          className="mb-1 block text-sm font-medium text-foreground"
         >
           Notes
         </label>
@@ -314,15 +314,15 @@ export function DiscoveryIntakeForm({ operatorId }: DiscoveryIntakeFormProps) {
           rows={3}
           value={formData.notes}
           onChange={handleChange}
-          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 outline-none resize-none"
+          className={`${inputClasses} resize-none`}
           placeholder="Any special requests or questions..."
         />
       </div>
 
       {/* Error message */}
       {state === "error" && errorMessage && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-          <p className="text-sm text-red-700">{errorMessage}</p>
+        <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3">
+          <p className="text-sm text-destructive">{errorMessage}</p>
         </div>
       )}
 
@@ -330,7 +330,7 @@ export function DiscoveryIntakeForm({ operatorId }: DiscoveryIntakeFormProps) {
       <button
         type="submit"
         disabled={state === "submitting"}
-        className="w-full bg-sky-600 hover:bg-sky-700 disabled:bg-sky-300 text-white font-medium py-3 px-4 rounded-lg transition-colors"
+        className="w-full rounded-lg bg-primary px-4 py-3 font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:bg-primary/50"
       >
         {state === "submitting" ? "Submitting..." : "Request Discovery Flight"}
       </button>

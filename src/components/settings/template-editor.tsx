@@ -106,6 +106,7 @@ function SingleTemplateEditor({
             size="icon-xs"
             onClick={() => setShowPreview(!showPreview)}
             title={showPreview ? "Hide preview" : "Show preview"}
+            aria-label={showPreview ? "Hide preview" : "Show preview"}
           >
             {showPreview ? (
               <EyeOff className="size-3.5" />
@@ -120,6 +121,7 @@ function SingleTemplateEditor({
               onClick={() => onReset(templateId)}
               disabled={disabled}
               title="Reset to default"
+              aria-label="Reset to default"
             >
               <RotateCcw className="size-3.5" />
             </Button>
